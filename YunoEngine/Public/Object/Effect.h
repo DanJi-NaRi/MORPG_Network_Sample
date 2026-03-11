@@ -1,0 +1,54 @@
+#pragma once
+#include "Unit.h"
+#include "EffectTemplate.h"
+
+//쿼드 한 개 스프라이트 이펙트
+class Effect : public Unit
+{
+public:
+    bool m_active = false;
+
+    float m_lifetime = 1.0f;
+    float m_emissive = 0.0f;
+    XMFLOAT4 m_emissiveCol = { 1, 1, 1, 1 };
+    float m_age = 0.0f;
+
+    int m_frameCount = 16;
+    int m_cols = 4;
+    int m_rows = 4;
+
+    bool flipbook = true;
+
+    bool m_loop = false;
+    BillboardMode billboard;
+public:
+    Effect();
+    virtual ~Effect() = default;
+
+    void SetID(int id) { m_id = id; }
+
+    virtual void SetTemplate(const EffectTemplate& temp);
+    virtual void Play(const XMFLOAT3& pos, const XMFLOAT3& scale, const XMFLOAT3& dir);
+    virtual void Reset();
+
+    virtual void UpdateWorldMatrix();
+    virtual void UpdateFrame();
+
+    XMMATRIX UpdateBillBoard();
+
+    XMMATRIX UpdateBeam();
+    XMMATRIX UpdateScreenAlign();
+    XMMATRIX UpdateWorldUpAlign();
+    XMMATRIX UpdateAxisLock();
+
+    virtual bool Update(float dt) override;
+    virtual bool Submit(float dt) override;
+
+    virtual UnitDesc GetDesc() override;
+
+private:
+    XMMATRIX GetParentRotationMatrix() const;
+    XMMATRIX GetParentTranslationMatrix() const;
+    XMFLOAT3 GetWorldPosition() const;
+    XMMATRIX AdjustBillboardForParent(const XMMATRIX& billboardWorld) const;
+};

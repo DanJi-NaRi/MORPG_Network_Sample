@@ -1,0 +1,67 @@
+# =========================
+# Visual Studio
+# =========================
+.vs/
+*.user
+*.suo
+*.VC.db
+*.VC.opendb
+*.vcxproj.user
+
+# Build output
+Debug/
+Release/
+x64/
+x86/
+Assets/
+
+# Intermediate / binaries
+*.obj
+*.pch
+*.pdb
+*.idb
+*.ilk
+*.exe
+*.dll
+*.lib
+
+# IntelliSense / intermediate
+ipch/
+*.tlog
+*.lastbuildstate
+
+# Logs
+*.log
+YunoGame/*.ini
+
+# =========================
+# CMake
+# =========================
+CMakeFiles/
+CMakeCache.txt
+
+# =========================
+# FMOD Studio (Authoring / Tool-side)
+# =========================
+
+# FMOD Studio project & metadata (auto-generated, machine-specific)
+ThirdParty/FMOD/fmodApp/.cache
+ThirdParty/FMOD/fmodApp/.unsaved
+ThirdParty/FMOD/fmodApp/.user
+
+# =========================
+# Project build outputs (your solution layout)
+# =========================
+Bin/
+Intermediate/
+
+# =========================
+# vcpkg (manifest mode outputs)
+# =========================
+vcpkg_installed/
+vcpkg/buildtrees/
+vcpkg/downloads/
+vcpkg/packages/
+vcpkg/installed/
+vcpkg/*.log
+vcpkg/*.exe
