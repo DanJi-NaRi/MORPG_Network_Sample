@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -119,7 +119,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)YunoImGui;$(SolutionDir)YunoEngine\Public;$(SolutionDir)YunoEngine\Public\Sound;$(SolutionDir)YunoEngine\Public\Camera;$(SolutionDir)YunoEngine\Public\Input;$(SolutionDir)YunoEngine\Public\Interface;$(SolutionDir)YunoEngine\Public\Math;$(SolutionDir)YunoEngine\Public\Object;$(SolutionDir)YunoEngine\Public\Renderer;$(SolutionDir)YunoEngine\Public\Renderer\3DAnimation;$(SolutionDir)YunoEngine\Public\Light;$(SolutionDir)YunoEngine\Public\Parser;$(SolutionDir)YunoEngine\Public\SceneBase;$(SolutionDir)YunoEngine\Public\Singleton;$(SolutionDir)YunoEngine\Public\UI;$(SolutionDir)YunoEngine\Public\UI\UITool;$(SolutionDir)YunoNetProtocol\Public;$(SolutionDir)YunoNetProtocol\Public\Net;$(SolutionDir)YunoNetProtocol\Public\Net\C2SPackets;$(SolutionDir)YunoNetProtocol\Public\Net\S2CPackets;$(SolutionDir)YunoNetProtocol\Public\Net\ErrorPackets;$(SolutionDir)YunoNetTransport\Public;$(SolutionDir)YunoNetTransport\Public\Net;$(ProjectDir);$(ProjectDir)Game;$(ProjectDir)Game\Object;$(ProjectDir)Game\UI;$(ProjectDir)GamePCH;$(ProjectDir)Scenes;$(ProjectDir)Scenes\SceneTemplate;$(ProjectDir)System;$(ProjectDir)GameManager;$(ProjectDir)ClientNetwork;$(SolutionDir)vcpkg_installed\x64-windows\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)YunoImGui;$(SolutionDir)YunoEngine\Public;$(SolutionDir)YunoEngine\Public\Sound;$(SolutionDir)YunoEngine\Public\Camera;$(SolutionDir)YunoEngine\Public\Input;$(SolutionDir)YunoEngine\Public\Interface;$(SolutionDir)YunoEngine\Public\Math;$(SolutionDir)YunoEngine\Public\Object;$(SolutionDir)YunoEngine\Public\Renderer;$(SolutionDir)YunoEngine\Public\Renderer\3DAnimation;$(SolutionDir)YunoEngine\Public\Light;$(SolutionDir)YunoEngine\Public\Parser;$(SolutionDir)YunoEngine\Public\SceneBase;$(SolutionDir)YunoEngine\Public\Singleton;$(SolutionDir)YunoEngine\Public\UI;$(SolutionDir)YunoEngine\Public\UI\UITool;$(SolutionDir)YunoNetProtocol\Public;$(SolutionDir)YunoNetProtocol\Public\Net;$(SolutionDir)YunoNetProtocol\Public\Net\C2SPackets;$(SolutionDir)YunoNetProtocol\Public\Net\S2CPackets;$(SolutionDir)YunoNetProtocol\Public\Net\ErrorPackets;$(SolutionDir)YunoGameProtocol\Public;$(SolutionDir)YunoGameProtocol\Public\Net;$(SolutionDir)YunoGameProtocol\Public\Net\MORPGPackets;$(SolutionDir)YunoNetTransport\Public;$(SolutionDir)YunoNetTransport\Public\Net;$(ProjectDir);$(ProjectDir)Game;$(ProjectDir)Game\Object;$(ProjectDir)Game\UI;$(ProjectDir)GamePCH;$(ProjectDir)Scenes;$(ProjectDir)Scenes\SceneTemplate;$(ProjectDir)System;$(ProjectDir)GameManager;$(ProjectDir)ClientNetwork;$(SolutionDir)vcpkg_installed\x64-windows\include</AdditionalIncludeDirectories>
       <PrecompiledHeaderOutputFile>$(IntDir)Game.pch</PrecompiledHeaderOutputFile>
       <AdditionalOptions>/utf-8 /Bt+ /showIncludes %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -147,7 +147,7 @@ xcopy /y /d "$(SolutionDir)Assets\Sound\*.dll" "$(TargetDir)"</Command>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)YunoImGui;$(SolutionDir)YunoEngine\Public;$(SolutionDir)YunoEngine\Public\Sound;$(SolutionDir)YunoEngine\Public\Camera;$(SolutionDir)YunoEngine\Public\Input;$(SolutionDir)YunoEngine\Public\Interface;$(SolutionDir)YunoEngine\Public\Math;$(SolutionDir)YunoEngine\Public\Object;$(SolutionDir)YunoEngine\Public\Renderer;$(SolutionDir)YunoEngine\Public\Renderer\3DAnimation;$(SolutionDir)YunoEngine\Public\Light;$(SolutionDir)YunoEngine\Public\Parser;$(SolutionDir)YunoEngine\Public\SceneBase;$(SolutionDir)YunoEngine\Public\Singleton;$(SolutionDir)YunoEngine\Public\UI;$(SolutionDir)YunoEngine\Public\UI\UITool;$(SolutionDir)YunoNetProtocol\Public;$(SolutionDir)YunoNetProtocol\Public\Net;$(SolutionDir)YunoNetProtocol\Public\Net\C2SPackets;$(SolutionDir)YunoNetProtocol\Public\Net\S2CPackets;$(SolutionDir)YunoNetProtocol\Public\Net\ErrorPackets;$(SolutionDir)YunoNetTransport\Public;$(SolutionDir)YunoNetTransport\Public\Net;$(ProjectDir);$(ProjectDir)Game;$(ProjectDir)Game\Object;$(ProjectDir)Game\UI;$(ProjectDir)GamePCH;$(ProjectDir)Scenes;$(ProjectDir)Scenes\SceneTemplate;$(ProjectDir)System;$(ProjectDir)GameManager;$(ProjectDir)ClientNetwork;$(SolutionDir)vcpkg_installed\x64-windows\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)YunoImGui;$(SolutionDir)YunoEngine\Public;$(SolutionDir)YunoEngine\Public\Sound;$(SolutionDir)YunoEngine\Public\Camera;$(SolutionDir)YunoEngine\Public\Input;$(SolutionDir)YunoEngine\Public\Interface;$(SolutionDir)YunoEngine\Public\Math;$(SolutionDir)YunoEngine\Public\Object;$(SolutionDir)YunoEngine\Public\Renderer;$(SolutionDir)YunoEngine\Public\Renderer\3DAnimation;$(SolutionDir)YunoEngine\Public\Light;$(SolutionDir)YunoEngine\Public\Parser;$(SolutionDir)YunoEngine\Public\SceneBase;$(SolutionDir)YunoEngine\Public\Singleton;$(SolutionDir)YunoEngine\Public\UI;$(SolutionDir)YunoEngine\Public\UI\UITool;$(SolutionDir)YunoNetProtocol\Public;$(SolutionDir)YunoNetProtocol\Public\Net;$(SolutionDir)YunoNetProtocol\Public\Net\C2SPackets;$(SolutionDir)YunoNetProtocol\Public\Net\S2CPackets;$(SolutionDir)YunoNetProtocol\Public\Net\ErrorPackets;$(SolutionDir)YunoGameProtocol\Public;$(SolutionDir)YunoGameProtocol\Public\Net;$(SolutionDir)YunoGameProtocol\Public\Net\MORPGPackets;$(SolutionDir)YunoNetTransport\Public;$(SolutionDir)YunoNetTransport\Public\Net;$(ProjectDir);$(ProjectDir)Game;$(ProjectDir)Game\Object;$(ProjectDir)Game\UI;$(ProjectDir)GamePCH;$(ProjectDir)Scenes;$(ProjectDir)Scenes\SceneTemplate;$(ProjectDir)System;$(ProjectDir)GameManager;$(ProjectDir)ClientNetwork;$(SolutionDir)vcpkg_installed\x64-windows\include</AdditionalIncludeDirectories>
       <PrecompiledHeaderOutputFile>$(IntDir)Game.pch</PrecompiledHeaderOutputFile>
       <AdditionalOptions>/utf-8 /Bt+ /showIncludes %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -181,12 +181,16 @@ xcopy /y /d "$(SolutionDir)Assets\Sound\*.dll" "$(TargetDir)"</Command>
     <ProjectReference Include="..\YunoNetProtocol\YunoNetProtocol.vcxproj">
       <Project>{69684c5f-323b-4bbf-8e8f-ee62bf0eca13}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\YunoGameProtocol\YunoGameProtocol.vcxproj">
+      <Project>{A5D1F4B2-7C55-4B4D-8A17-6B2D6E5B1A91}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\YunoNetTransport\YunoNetTransport.vcxproj">
       <Project>{3c413f28-750c-49a2-ae7c-cc0cabd4650e}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Game\Object\Building.cpp" />
+    <ClCompile Include="Game\Object\Terrain.cpp" />
     <ClCompile Include="Scenes\TestScene.cpp" />
     <ClCompile Include="ClientNetwork\YunoClientNetwork.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -208,6 +212,7 @@ xcopy /y /d "$(SolutionDir)Assets\Sound\*.dll" "$(TargetDir)"</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game\Object\Building.h" />
+    <ClInclude Include="Game\Object\Terrain.h" />
     <ClInclude Include="Scenes\TestScene.h" />
     <ClInclude Include="ClientNetwork\YunoClientNetwork.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -225,6 +230,7 @@ xcopy /y /d "$(SolutionDir)Assets\Sound\*.dll" "$(TargetDir)"</Command>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>
+
 
 
 

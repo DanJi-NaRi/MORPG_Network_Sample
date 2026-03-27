@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="main">
@@ -169,6 +169,7 @@
       <Filter>Scenes\99.Test</Filter>
     </ClCompile>
     <ClCompile Include="Game\Object\Building.cpp" />
+    <ClCompile Include="Game\Object\Terrain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GamePCH\pch.h">
@@ -188,5 +189,6 @@
     </ClInclude>
     <ClInclude Include="utilityClass.h" />
     <ClInclude Include="Game\Object\Building.h" />
+    <ClInclude Include="Game\Object\Terrain.h" />
   </ItemGroup>
 </Project>

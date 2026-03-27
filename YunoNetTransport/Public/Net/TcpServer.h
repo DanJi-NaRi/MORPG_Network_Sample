@@ -1,6 +1,10 @@
 #pragma once
 
 #include "TcpSession.h"
+#include <cstdint>
+#include <functional>
+#include <unordered_map>
+#include <vector>
 
 
 // 소유 관계 정리

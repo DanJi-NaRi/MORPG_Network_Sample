@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{69684c5f-323b-4bbf-8e8f-ee62bf0eca13}</ProjectGuid>
-    <RootNamespace>YunoNetProtocol</RootNamespace>
+    <ProjectGuid>{A5D1F4B2-7C55-4B4D-8A17-6B2D6E5B1A91}</ProjectGuid>
+    <RootNamespace>YunoGameProtocol</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -67,12 +67,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>$(SolutionDir)Bin\$(Platform)\$(Configuration)\NetProtocol\</OutDir>
-    <IntDir>$(SolutionDir)Intermediate\$(Platform)\$(Configuration)\NetProtocol\</IntDir>
+    <OutDir>$(SolutionDir)Bin\$(Platform)\$(Configuration)\GameProtocol\</OutDir>
+    <IntDir>$(SolutionDir)Intermediate\$(Platform)\$(Configuration)\GameProtocol\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(SolutionDir)Bin\$(Platform)\$(Configuration)\NetProtocol\</OutDir>
-    <IntDir>$(SolutionDir)Intermediate\$(Platform)\$(Configuration)\NetProtocol\</IntDir>
+    <OutDir>$(SolutionDir)Bin\$(Platform)\$(Configuration)\GameProtocol\</OutDir>
+    <IntDir>$(SolutionDir)Intermediate\$(Platform)\$(Configuration)\GameProtocol\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -116,7 +116,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir)ProtocolPCH;$(ProjectDir)Public;$(ProjectDir)Public\Net;$(ProjectDir)Public\Net\S2CPackets;$(ProjectDir)Public\Net\C2SPackets;$(ProjectDir)Public\Net\ErrorPackets;$(SolutionDir)vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)GameProtocolPCH;$(ProjectDir)Public;$(ProjectDir)Public\Net;$(ProjectDir)Public\Net\MORPGPackets;$(SolutionDir)YunoNetProtocol\Public;$(SolutionDir)YunoNetProtocol\Public\Net;$(SolutionDir)YunoNetProtocol\Public\Net\ErrorPackets;$(SolutionDir)vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -135,7 +135,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir)ProtocolPCH;$(ProjectDir)Public;$(ProjectDir)Public\Net;$(ProjectDir)Public\Net\S2CPackets;$(ProjectDir)Public\Net\C2SPackets;$(ProjectDir)Public\Net\ErrorPackets;$(SolutionDir)vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)GameProtocolPCH;$(ProjectDir)Public;$(ProjectDir)Public\Net;$(ProjectDir)Public\Net\MORPGPackets;$(SolutionDir)YunoNetProtocol\Public;$(SolutionDir)YunoNetProtocol\Public\Net;$(SolutionDir)YunoNetProtocol\Public\Net\ErrorPackets;$(SolutionDir)vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -147,35 +147,33 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ProtocolPCH\pch.h" />
-    <ClInclude Include="Public\Net\C2SPackets\C2S_Ping.h" />
-    <ClInclude Include="Public\Net\ByteIO.h" />
-    <ClInclude Include="Public\Net\ErrorPackets\S2C_Error.h" />
-    <ClInclude Include="Public\Net\NetPeer.h" />
-    <ClInclude Include="Public\Net\PacketBuilder.h" />
-    <ClInclude Include="Public\Net\PacketDispatcher.h" />
-    <ClInclude Include="Public\Net\PacketHeader.h" />
-    <ClInclude Include="Public\Net\S2CPackets\S2C_Pong.h" />
-    <ClInclude Include="Public\Net\PacketType.h" />
+    <ClInclude Include="GameProtocolPCH\pch.h" />
+    <ClInclude Include="Public\Net\MORPGPackets\C2S_EnterWorld.h" />
+    <ClInclude Include="Public\Net\MORPGPackets\C2S_MoveInput.h" />
+    <ClInclude Include="Public\Net\MORPGPackets\S2C_WorldSnapshot.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Private\Net\ErrorPackets\S2C_Error.cpp" />
-    <ClCompile Include="ProtocolPCH\pch.cpp">
+    <ClCompile Include="Private\Net\MORPGPackets\C2S_EnterWorld.cpp" />
+    <ClCompile Include="Private\Net\MORPGPackets\C2S_MoveInput.cpp" />
+    <ClCompile Include="Private\Net\MORPGPackets\S2C_WorldSnapshot.cpp" />
+    <ClCompile Include="GameProtocolPCH\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Private\Net\ByteIO.cpp" />
-    <ClCompile Include="Private\Net\PacketBuilder.cpp" />
-    <ClCompile Include="Private\Net\PacketDispatcher.cpp" />
-    <ClCompile Include="Private\Net\C2SPackets\C2S_Ping.cpp" />
-    <ClCompile Include="Private\Net\S2CPackets\S2C_Pong.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\YunoNetProtocol\YunoNetProtocol.vcxproj">
+      <Project>{69684C5F-323B-4BBF-8E8F-EE62BF0ECA13}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>
+
+
 
 
 

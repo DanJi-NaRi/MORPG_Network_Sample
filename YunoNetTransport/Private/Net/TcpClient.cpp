@@ -52,6 +52,10 @@ namespace yuno::net
 
                         std::cout << "[TcpClient] Connect success\n";
 
+                        boost::system::error_code ignored;
+                        socket->set_option(boost::asio::ip::tcp::no_delay(true), ignored);
+                        socket->set_option(boost::asio::socket_base::keep_alive(true), ignored);
+
                         constexpr sessionId kClientSid = 0;
                         auto session = std::make_shared<TcpSession>(kClientSid, std::move(*socket));
                         m_session = session;

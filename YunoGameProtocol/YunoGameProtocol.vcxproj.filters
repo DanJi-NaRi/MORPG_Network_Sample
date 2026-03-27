@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Private">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Public">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Public\Network">
+      <UniqueIdentifier>{b6a98825-691f-40f5-8804-348634081e5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Private\Network">
+      <UniqueIdentifier>{e7eeafbc-aaea-48ed-8273-ca1757acba2f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Private\Network\Packets">
+      <UniqueIdentifier>{1422e296-fc58-4111-9e45-308de581c511}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Public\Network\Packets">
+      <UniqueIdentifier>{3b75e956-c9b2-41fb-8e7b-2e43283a5996}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ProtocolPCH">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Public\Net\MORPGPackets\C2S_EnterWorld.h">
+      <Filter>Public\Network\Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\Net\MORPGPackets\C2S_MoveInput.h">
+      <Filter>Public\Network\Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\Net\MORPGPackets\S2C_WorldSnapshot.h">
+      <Filter>Public\Network\Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="GameProtocolPCH\pch.h">
+      <Filter>ProtocolPCH</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Private\Net\MORPGPackets\S2C_WorldSnapshot.cpp">
+      <Filter>Private\Network\Packets</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\Net\MORPGPackets\C2S_MoveInput.cpp">
+      <Filter>Private\Network\Packets</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\Net\MORPGPackets\C2S_EnterWorld.cpp">
+      <Filter>Private\Network\Packets</Filter>
+    </ClCompile>
+    <ClCompile Include="GameProtocolPCH\pch.cpp">
+      <Filter>ProtocolPCH</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

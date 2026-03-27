@@ -8,6 +8,8 @@ namespace yuno::net
         : m_sid(sid)
         , m_socket(std::move(socket))
         , m_strand(m_socket.get_executor())
+        , m_idleTimer(m_socket.get_executor())
+        , m_lastRecvTime(std::chrono::steady_clock::now())
     {
     }
 
@@ -15,6 +17,8 @@ namespace yuno::net
     {
         boost::asio::dispatch(m_strand, [self = shared_from_this()]()
             {
+                self->RefreshLastRecvTime();
+                self->ArmIdleTimer();
                 self->ReadHeader();
             });
     }
@@ -24,6 +28,9 @@ namespace yuno::net
         boost::asio::dispatch(m_strand, [self = shared_from_this()]()
             {
                 self->m_disconnectedNotified = true;
+                self->m_idleTimer.cancel();
+                self->m_writeQ.clear();
+                self->m_writeQueueBytes = 0;
 
                 boost::system::error_code ec;
                 self->m_socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
@@ -33,14 +40,27 @@ namespace yuno::net
 
     void TcpSession::Send(std::vector<std::uint8_t> packetBytes)
     {
+        auto shared = std::make_shared<const std::vector<std::uint8_t>>(std::move(packetBytes));
+        Send(std::move(shared));
+    }
+
+    void TcpSession::Send(std::shared_ptr<const std::vector<std::uint8_t>> packetBytes)
+    {
         boost::asio::dispatch(m_strand, [self = shared_from_this(), pkt = std::move(packetBytes)]() mutable
             {
-                if (pkt.size() < yunoTCPPacketHeaderSize)
+                if (!pkt || pkt->size() < yunoTCPPacketHeaderSize)
                     return;
-                assert(pkt.size() >= yunoTCPPacketHeaderSize);
+
+                if (!self->CheckWriteQueueBudget(pkt->size()))
+                {
+                    boost::system::error_code ec = boost::asio::error::no_buffer_space;
+                    self->NotifyDisconnected(ec);
+                    return;
+                }
 
                 const bool isEmpty = self->m_writeQ.empty();
-                self->m_writeQ.push_back(std::move(pkt)); // 이때 패킷은 헤더 + 바디 전체임
+                self->m_writeQueueBytes += pkt->size();
+                self->m_writeQ.push_back(std::move(pkt));
 
                 if (isEmpty && !self->m_writing)
                 {
@@ -66,16 +86,14 @@ namespace yuno::net
                     }
 
                     const std::uint32_t bodyLen = TcpSession::ReadU32LE(self->m_readHeader.data());
-
-                    
-                    constexpr std::uint32_t MaxLength = 4u * 1024u * 1024u;
-                    if (bodyLen > MaxLength)
+                    if (bodyLen > kMaxBodyLengthBytes)
                     {
                         boost::system::error_code fake = boost::asio::error::message_size;
                         self->NotifyDisconnected(fake);
                         return;
                     }
 
+                    self->RefreshLastRecvTime();
                     self->ReadBody(bodyLen);
                 }
             )
@@ -91,7 +109,6 @@ namespace yuno::net
 
         if (bodyLen == 0)
         {
-            // 헤더만 있는 패킷도 허용
             std::vector<std::uint8_t> packet;
             packet.reserve(yunoTCPPacketHeaderSize);
             packet.insert(packet.end(), m_readHeader.begin(), m_readHeader.end());
@@ -99,6 +116,7 @@ namespace yuno::net
             if (self->m_onPacket)
                 self->m_onPacket(std::move(packet));
 
+            self->RefreshLastRecvTime();
             self->ReadHeader();
             return;
         }
@@ -115,19 +133,15 @@ namespace yuno::net
                         return;
                     }
 
-                    // 완성 패킷(헤더8 + 바디N)을 한 덩어리로 올림
                     std::vector<std::uint8_t> packet;
                     packet.reserve(yunoTCPPacketHeaderSize + self->m_readBody.size());
-
-                    packet.insert(packet.end(),
-                        self->m_readHeader.begin(), self->m_readHeader.end());
-
-                    packet.insert(packet.end(),
-                        self->m_readBody.begin(), self->m_readBody.end());
+                    packet.insert(packet.end(), self->m_readHeader.begin(), self->m_readHeader.end());
+                    packet.insert(packet.end(), self->m_readBody.begin(), self->m_readBody.end());
 
                     if (self->m_onPacket)
                         self->m_onPacket(std::move(packet));
 
+                    self->RefreshLastRecvTime();
                     self->ReadHeader();
                 }
             )
@@ -144,21 +158,25 @@ namespace yuno::net
 
         m_writing = true;
         auto self = shared_from_this();
+        auto pkt = m_writeQ.front();
 
         boost::asio::async_write(
             m_socket,
-            boost::asio::buffer(m_writeQ.front().data(), m_writeQ.front().size()),
+            boost::asio::buffer(pkt->data(), pkt->size()),
             boost::asio::bind_executor(m_strand,
                 [self](const boost::system::error_code& ec, std::size_t /*bytes*/)
                 {
                     if (ec)
                     {
-                        // 에러 발생하면 연결 끊김 알림
                         self->NotifyDisconnected(ec);
                         return;
                     }
 
-                    self->m_writeQ.pop_front();
+                    if (!self->m_writeQ.empty())
+                    {
+                        self->m_writeQueueBytes -= self->m_writeQ.front()->size();
+                        self->m_writeQ.pop_front();
+                    }
                     self->DoWrite();
                 }
             )
@@ -171,27 +189,57 @@ namespace yuno::net
             return;
         m_disconnectedNotified = true;
 
-        // 콜백 먼저
         if (m_onDisconnected)
             m_onDisconnected(ec);
 
-        // 소켓 닫기
+        m_idleTimer.cancel();
         boost::system::error_code ignored;
         m_socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored);
         m_socket.close(ignored);
     }
 
+    void TcpSession::ArmIdleTimer()
+    {
+        auto self = shared_from_this();
+        m_idleTimer.expires_after(kIdleTimeout);
+        m_idleTimer.async_wait(boost::asio::bind_executor(m_strand,
+            [self](const boost::system::error_code& ec)
+            {
+                if (ec || self->m_disconnectedNotified)
+                    return;
+
+                const auto now = std::chrono::steady_clock::now();
+                const auto idleFor = now - self->m_lastRecvTime;
+                if (idleFor >= kIdleTimeout)
+                {
+                    boost::system::error_code timeoutEc = boost::asio::error::timed_out;
+                    self->NotifyDisconnected(timeoutEc);
+                    return;
+                }
+
+                self->ArmIdleTimer();
+            }));
+    }
+
+    void TcpSession::RefreshLastRecvTime()
+    {
+        m_lastRecvTime = std::chrono::steady_clock::now();
+    }
+
+    bool TcpSession::CheckWriteQueueBudget(std::size_t nextPacketBytes) const
+    {
+        if (m_writeQ.size() >= kMaxWriteQueuePackets)
+            return false;
+
+        if (m_writeQueueBytes + nextPacketBytes > kMaxWriteQueueBytes)
+            return false;
+
+        return true;
+    }
+
     std::uint32_t TcpSession::ReadU32LE(const std::uint8_t* p)
     {
-        // p0가 LSB임 
-        // 4Byte를 읽을거임
-        // 리틀 엔디안
-        // 0x000000[p0]
-        // 0x0000[p1]00
-        // 0x00[p2]0000
-        // 0x[p3]000000
-
-        return (std::uint32_t)p[0]              
+        return (std::uint32_t)p[0]
             | ((std::uint32_t)p[1] << 8)
             | ((std::uint32_t)p[2] << 16)
             | ((std::uint32_t)p[3] << 24);

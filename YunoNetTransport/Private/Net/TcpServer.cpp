@@ -72,7 +72,10 @@ namespace yuno::net
                     DoAccept();
                     return;
                 }
-                //std::cout << "[TcpServer] accepted\n";
+
+                boost::system::error_code ignored;
+                socket.set_option(boost::asio::ip::tcp::no_delay(true), ignored);
+                socket.set_option(boost::asio::socket_base::keep_alive(true), ignored);
 
                 // 서버
                 const sessionId sid = NextSessionId();
@@ -129,13 +132,14 @@ namespace yuno::net
 
     void TcpServer::Broadcast(std::vector<std::uint8_t> packetBytes)
     {
+        auto sharedPacket = std::make_shared<const std::vector<std::uint8_t>>(std::move(packetBytes));
 
         for (auto& sess : m_sessions)
         {
             if (!sess.second)
                 continue;
 
-            sess.second->Send(packetBytes);
+            sess.second->Send(sharedPacket);
         }
     }
 

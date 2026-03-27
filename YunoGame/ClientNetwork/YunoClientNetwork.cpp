@@ -2,25 +2,13 @@
 
 #include "YunoClientNetwork.h"
 
-// 이거로 게임 관리할거임
+// ?닿굅濡?寃뚯엫 愿由ы븷嫄곗엫
 
 #include "PacketBuilder.h"
 
-// 패킷들
-#include "S2C_Pong.h"
-#include "S2C_EnterOK.h"
-#include "S2C_Error.h"
-#include "S2C_ReadyState.h"
-#include "S2C_CountDown.h"
-#include "S2C_RoundStart.h"
-#include "S2C_BattlePackets.h"
+// ?⑦궥??
 
-#include "C2S_SubmitWeapon.h"
 
-#include "S2C_CardPackets.h"
-#include "S2C_EndGame.h"
-#include "S2C_Emote.h"
-#include "S2C_EndGame_Disconnect.h"
 namespace yuno::game
 {
     YunoClientNetwork::YunoClientNetwork()
@@ -33,14 +21,14 @@ namespace yuno::game
         m_client.SetOnPacket(
             [this](std::vector<std::uint8_t>&& packet)
             {
-                // 이 콜백은 io_context 스레드에서 호출됨
+                // ??肄쒕갚? io_context ?ㅻ젅?쒖뿉???몄텧??
                 PushIncoming(std::move(packet));
             });
 
         m_client.SetOnDisconnected(
             [this](const boost::system::error_code& /*ec*/)
             {
-                // 필요하면 "끊김 이벤트"를 별도 큐로도 올릴 수 있음
+                // ?꾩슂?섎㈃ "?딄? ?대깽??瑜?蹂꾨룄 ?먮줈???щ┫ ???덉쓬
             });
     }
 
@@ -54,14 +42,14 @@ namespace yuno::game
         if (m_running.exchange(true))
             return;
 
-        // io_context 실행 스레드 시작
+        // io_context ?ㅽ뻾 ?ㅻ젅???쒖옉
         m_netThread = std::thread(
             [this]()
             {
                 m_io.run();
             });
 
-        // 연결 시도는 네트워크 스레드 컨텍스트에서 실행되도록 post
+        // ?곌껐 ?쒕룄???ㅽ듃?뚰겕 ?ㅻ젅??而⑦뀓?ㅽ듃?먯꽌 ?ㅽ뻾?섎룄濡?post
         boost::asio::post(
             m_io,
             [this, host, port]()
@@ -75,7 +63,7 @@ namespace yuno::game
         if (!m_running.exchange(false))
             return;
 
-        // Disconnect도 io 스레드에서 처리
+        // Disconnect??io ?ㅻ젅?쒖뿉??泥섎━
         boost::asio::post(
             m_io,
             [this]()
@@ -89,7 +77,7 @@ namespace yuno::game
         if (m_netThread.joinable())
             m_netThread.join();
 
-        // 큐 정리
+        // ???뺣━
         {
             std::lock_guard<std::mutex> lock(m_inMtx);
             m_inQ.clear();
@@ -113,7 +101,7 @@ namespace yuno::game
 
     void YunoClientNetwork::PumpIncoming(float dt)
     {
-        // 메인 스레드에서만 호출
+        // 硫붿씤 ?ㅻ젅?쒖뿉?쒕쭔 ?몄텧
         std::vector<std::uint8_t> pkt;
         while (PopIncoming(pkt))
         {
@@ -139,7 +127,7 @@ namespace yuno::game
     }
 
 
-    // ------------------------------- 핸들 함수 등록 -------------------------------
+    // ------------------------------- ?몃뱾 ?⑥닔 ?깅줉 -------------------------------
     void YunoClientNetwork::RegisterMatchPacketHandler() 
     {
 //
@@ -237,7 +225,7 @@ namespace yuno::game
 //                GameManager& gm = GameManager::Get();
 //
 //                std::cout << "game state : " << static_cast<int>(gm.GetSceneState()) << std::endl;
-//                // 현재 씬이 StandBy 상태 즉 WeaponSelectScene일때만 패킷 동작
+//                // ?꾩옱 ?ъ씠 StandBy ?곹깭 利?WeaponSelectScene?쇰븣留??⑦궥 ?숈옉
 //                if (gm.GetSceneState() == CurrentSceneState::StandBy) {
 //                    gm.StartCountDown(
 //                        countTime,
@@ -268,7 +256,7 @@ namespace yuno::game
 //                    gm.SetWeaponData(u.PID, u.slotID, u.WeaponID, u.hp, u.stamina, u.SpawnTileId);
 //                }
 //                
-//                gm.SetUpPanels(); // 패널 초기화
+//                gm.SetUpPanels(); // ?⑤꼸 珥덇린??
 //
 //                auto wVector = gm.GetWeaponData();
 //
@@ -297,12 +285,12 @@ namespace yuno::game
 //                ByteReader r(body, bodyLen);
 //                const auto err = yuno::net::packets::S2C_Error::Deserialize(r);
 //
-//                const auto code = err.code;         // 어떤 에러가 났는지
-//                const auto reason = err.reason;     // 왜 발생했는지
-//                const auto ctx = err.contextType;   // 어떤 패킷에서 발생했는지
+//                const auto code = err.code;         // ?대뼡 ?먮윭媛 ?щ뒗吏
+//                const auto reason = err.reason;     // ??諛쒖깮?덈뒗吏
+//                const auto ctx = err.contextType;   // ?대뼡 ?⑦궥?먯꽌 諛쒖깮?덈뒗吏
 //
 //
-//                // MatchEnter 거부 처리
+//                // MatchEnter 嫄곕? 泥섎━
 //                if (code == yuno::net::packets::ErrorCode::EnterDenied &&
 //                    ctx == PacketType::C2S_MatchEnter)
 //                {
@@ -371,7 +359,7 @@ namespace yuno::game
 //
 //                GameManager& gm = GameManager::Get();
 //
-//                // 어떤 카드 결과인지 (지금은 로그용)
+//                // ?대뼡 移대뱶 寃곌낵?몄? (吏湲덉? 濡쒓렇??
 //                std::cout << "[Client] BattleResult runtimeCardId="
 //                    << pkt.runtimeCardId
 //                    << " ownerSlot=" << static_cast<int>(pkt.ownerSlot)
@@ -403,18 +391,18 @@ namespace yuno::game
 //                std::cout << "Battle Packet(actionTime) : " << static_cast<int>(pkt.actionTime) << std::endl;
 //
 //                gm.PushBattlePacket(br);
-//                gm.PushRevealPacket(br);// 복사 저장
+//                gm.PushRevealPacket(br);// 蹂듭궗 ???
 //                gm.UpdatePanels(br);
 //                gm.SetSceneState(CurrentSceneState::AutoBattle);
 //                gm.SetCoinToss(static_cast<int>(pkt.isCoinTossUsed));
 //
-//                // 이거때문에 둘 다 카드 제출하고 업데이트 하는 순간 미니맵 없어서 터짐
+//                // ?닿굅?뚮Ц??????移대뱶 ?쒖텧?섍퀬 ?낅뜲?댄듃 ?섎뒗 ?쒓컙 誘몃땲留??놁뼱???곗쭚
 //                //gm.UpdatePanels(br);
-//                // MK 추가
-//                // 게임 매니저 큐에 push.
+//                // MK 異붽?
+//                // 寃뚯엫 留ㅻ땲? ?먯뿉 push.
 //
 //
-//                // 디버깅용
+//                // ?붾쾭源낆슜
 //                std::cout
 //                    << "\n------------------------------\n"
 //                    << "    [BattleResult Packet]"
@@ -473,7 +461,7 @@ namespace yuno::game
 //                        << "\n";
 //                }
 //
-//                // 나중에 여기서 GameManager로 넘기면 됨
+//                // ?섏쨷???ш린??GameManager濡??섍린硫???
 //                // GameManager::Get().SetDrawCandidates(pkt.cards);
 //            }
 //        ); // DrawCandidates Packet End
@@ -568,7 +556,7 @@ namespace yuno::game
 //                        << "\n";
 //                }
 //
-//                // 결과 판정
+//                // 寃곌낵 ?먯젙
 //                const uint8_t p1Wins = pkt.results[0].winCount;
 //                const uint8_t p2Wins = pkt.results[1].winCount;
 //
@@ -635,7 +623,7 @@ namespace yuno::game
 //                auto pkt =
 //                    yuno::net::packets::S2C_ObstacleResult::Deserialize(r);
 //
-//                //여기서 게임매니저에 만든 함수 가져와서 클라에 나올거 구현하기
+//                //?ш린??寃뚯엫留ㅻ땲???留뚮뱺 ?⑥닔 媛?몄????대씪???섏삱嫄?援ы쁽?섍린
 //
 //                std::cout
 //                    << "[Client] ObstacleResult received "

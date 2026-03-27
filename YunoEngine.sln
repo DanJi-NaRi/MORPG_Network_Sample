@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.13.35825.156
@@ -11,7 +11,11 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "YunoServer", "YunoServer\YunoServer.vcxproj", "{9585BF40-E4B6-4A74-9202-893D0377EDE2}"
 	ProjectSection(ProjectDependencies) = postProject
 		{3C413F28-750C-49A2-AE7C-CC0CABD4650E} = {3C413F28-750C-49A2-AE7C-CC0CABD4650E}
-		{69684C5F-323B-4BBF-8E8F-EE62BF0ECA13} = {69684C5F-323B-4BBF-8E8F-EE62BF0ECA13}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "YunoLoginServer", "YunoLoginServer\YunoLoginServer.vcxproj", "{A84A8C8C-44DF-4CC7-9B6E-6F89A233799C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3C413F28-750C-49A2-AE7C-CC0CABD4650E} = {3C413F28-750C-49A2-AE7C-CC0CABD4650E}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "YunoNetProtocol", "YunoNetProtocol\YunoNetProtocol.vcxproj", "{69684C5F-323B-4BBF-8E8F-EE62BF0ECA13}"
@@ -19,6 +23,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "YunoImGui", "YunoImGui\YunoImGui.vcxproj", "{CE3886A1-ACC6-4B3E-B173-4FFDEB44E0FB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "YunoNetTransport", "YunoNetTransport\YunoNetTransport.vcxproj", "{3C413F28-750C-49A2-AE7C-CC0CABD4650E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "YunoGameProtocol", "YunoGameProtocol\YunoGameProtocol.vcxproj", "{A5D1F4B2-7C55-4B4D-8A17-6B2D6E5B1A91}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "YunoGame", "YunoGame\YunoGame.vcxproj", "{6F20F6E3-AB1D-4D58-B117-1AA018D32777}"
 EndProject
@@ -46,6 +52,14 @@ Global
 		{9585BF40-E4B6-4A74-9202-893D0377EDE2}.Release|x64.Build.0 = Release|x64
 		{9585BF40-E4B6-4A74-9202-893D0377EDE2}.Release|x86.ActiveCfg = Release|Win32
 		{9585BF40-E4B6-4A74-9202-893D0377EDE2}.Release|x86.Build.0 = Release|Win32
+		{A84A8C8C-44DF-4CC7-9B6E-6F89A233799C}.Debug|x64.ActiveCfg = Debug|x64
+		{A84A8C8C-44DF-4CC7-9B6E-6F89A233799C}.Debug|x64.Build.0 = Debug|x64
+		{A84A8C8C-44DF-4CC7-9B6E-6F89A233799C}.Debug|x86.ActiveCfg = Debug|Win32
+		{A84A8C8C-44DF-4CC7-9B6E-6F89A233799C}.Debug|x86.Build.0 = Debug|Win32
+		{A84A8C8C-44DF-4CC7-9B6E-6F89A233799C}.Release|x64.ActiveCfg = Release|x64
+		{A84A8C8C-44DF-4CC7-9B6E-6F89A233799C}.Release|x64.Build.0 = Release|x64
+		{A84A8C8C-44DF-4CC7-9B6E-6F89A233799C}.Release|x86.ActiveCfg = Release|Win32
+		{A84A8C8C-44DF-4CC7-9B6E-6F89A233799C}.Release|x86.Build.0 = Release|Win32
 		{69684C5F-323B-4BBF-8E8F-EE62BF0ECA13}.Debug|x64.ActiveCfg = Debug|x64
 		{69684C5F-323B-4BBF-8E8F-EE62BF0ECA13}.Debug|x64.Build.0 = Debug|x64
 		{69684C5F-323B-4BBF-8E8F-EE62BF0ECA13}.Debug|x86.ActiveCfg = Debug|Win32
@@ -78,6 +92,14 @@ Global
 		{6F20F6E3-AB1D-4D58-B117-1AA018D32777}.Release|x64.Build.0 = Release|x64
 		{6F20F6E3-AB1D-4D58-B117-1AA018D32777}.Release|x86.ActiveCfg = Release|Win32
 		{6F20F6E3-AB1D-4D58-B117-1AA018D32777}.Release|x86.Build.0 = Release|Win32
+		{A5D1F4B2-7C55-4B4D-8A17-6B2D6E5B1A91}.Debug|x64.ActiveCfg = Debug|x64
+		{A5D1F4B2-7C55-4B4D-8A17-6B2D6E5B1A91}.Debug|x64.Build.0 = Debug|x64
+		{A5D1F4B2-7C55-4B4D-8A17-6B2D6E5B1A91}.Debug|x86.ActiveCfg = Debug|Win32
+		{A5D1F4B2-7C55-4B4D-8A17-6B2D6E5B1A91}.Debug|x86.Build.0 = Debug|Win32
+		{A5D1F4B2-7C55-4B4D-8A17-6B2D6E5B1A91}.Release|x64.ActiveCfg = Release|x64
+		{A5D1F4B2-7C55-4B4D-8A17-6B2D6E5B1A91}.Release|x64.Build.0 = Release|x64
+		{A5D1F4B2-7C55-4B4D-8A17-6B2D6E5B1A91}.Release|x86.ActiveCfg = Release|Win32
+		{A5D1F4B2-7C55-4B4D-8A17-6B2D6E5B1A91}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -86,3 +108,4 @@ Global
 		SolutionGuid = {DF9FA857-37A3-459E-9BE6-F4C176EAD97B}
 	EndGlobalSection
 EndGlobal
+
