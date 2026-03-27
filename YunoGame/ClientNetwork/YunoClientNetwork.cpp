@@ -2,11 +2,11 @@
 
 #include "YunoClientNetwork.h"
 
-// ?닿굅濡?寃뚯엫 愿由ы븷嫄곗엫
+// ??욧탢嚥?野껊슣???온?귐뗫막椰꾧퀣??
 
 #include "PacketBuilder.h"
 
-// ?⑦궥??
+// ???땅??
 
 
 namespace yuno::game
@@ -21,14 +21,14 @@ namespace yuno::game
         m_client.SetOnPacket(
             [this](std::vector<std::uint8_t>&& packet)
             {
-                // ??肄쒕갚? io_context ?ㅻ젅?쒖뿉???몄텧??
+                // ???꾩뮆媛?? io_context ??살쟿??뽯퓠???紐꾪뀱??
                 PushIncoming(std::move(packet));
             });
 
         m_client.SetOnDisconnected(
             [this](const boost::system::error_code& /*ec*/)
             {
-                // ?꾩슂?섎㈃ "?딄? ?대깽??瑜?蹂꾨룄 ?먮줈???щ┫ ???덉쓬
+                // ?袁⑹뒄??롢늺 "??? ??源????癰귢쑬猷??癒?쨮??????????됱벉
             });
     }
 
@@ -42,14 +42,14 @@ namespace yuno::game
         if (m_running.exchange(true))
             return;
 
-        // io_context ?ㅽ뻾 ?ㅻ젅???쒖옉
+        // io_context ??쎈뻬 ??살쟿????뽰삂
         m_netThread = std::thread(
             [this]()
             {
                 m_io.run();
             });
 
-        // ?곌껐 ?쒕룄???ㅽ듃?뚰겕 ?ㅻ젅??而⑦뀓?ㅽ듃?먯꽌 ?ㅽ뻾?섎룄濡?post
+        // ?怨뚭퍙 ??뺣즲????쎈뱜??곌쾿 ??살쟿???뚢뫂???쎈뱜?癒?퐣 ??쎈뻬??롫즲嚥?post
         boost::asio::post(
             m_io,
             [this, host, port]()
@@ -63,7 +63,7 @@ namespace yuno::game
         if (!m_running.exchange(false))
             return;
 
-        // Disconnect??io ?ㅻ젅?쒖뿉??泥섎━
+        // Disconnect??io ??살쟿??뽯퓠??筌ｌ꼶??
         boost::asio::post(
             m_io,
             [this]()
@@ -77,7 +77,7 @@ namespace yuno::game
         if (m_netThread.joinable())
             m_netThread.join();
 
-        // ???뺣━
+        // ???類ｂ봺
         {
             std::lock_guard<std::mutex> lock(m_inMtx);
             m_inQ.clear();
@@ -101,10 +101,15 @@ namespace yuno::game
 
     void YunoClientNetwork::PumpIncoming(float dt)
     {
-        // 硫붿씤 ?ㅻ젅?쒖뿉?쒕쭔 ?몄텧
+        // 筌롫뗄????살쟿??뽯퓠??뺤춸 ?紐꾪뀱
         std::vector<std::uint8_t> pkt;
         while (PopIncoming(pkt))
         {
+            if (m_rawPacketTap)
+            {
+                m_rawPacketTap(pkt);
+            }
+
             m_dispatcher.Dispatch(m_serverPeer, pkt);
         }
     }
@@ -127,7 +132,7 @@ namespace yuno::game
     }
 
 
-    // ------------------------------- ?몃뱾 ?⑥닔 ?깅줉 -------------------------------
+    // ------------------------------- ?紐껊굶 ??λ땾 ?源낆쨯 -------------------------------
     void YunoClientNetwork::RegisterMatchPacketHandler() 
     {
 //
@@ -225,7 +230,7 @@ namespace yuno::game
 //                GameManager& gm = GameManager::Get();
 //
 //                std::cout << "game state : " << static_cast<int>(gm.GetSceneState()) << std::endl;
-//                // ?꾩옱 ?ъ씠 StandBy ?곹깭 利?WeaponSelectScene?쇰븣留??⑦궥 ?숈옉
+//                // ?袁⑹삺 ????StandBy ?怨밴묶 筌?WeaponSelectScene??곕르筌????땅 ??덉삂
 //                if (gm.GetSceneState() == CurrentSceneState::StandBy) {
 //                    gm.StartCountDown(
 //                        countTime,
@@ -256,7 +261,7 @@ namespace yuno::game
 //                    gm.SetWeaponData(u.PID, u.slotID, u.WeaponID, u.hp, u.stamina, u.SpawnTileId);
 //                }
 //                
-//                gm.SetUpPanels(); // ?⑤꼸 珥덇린??
+//                gm.SetUpPanels(); // ??ㅺ섯 ?λ뜃由??
 //
 //                auto wVector = gm.GetWeaponData();
 //
@@ -285,12 +290,12 @@ namespace yuno::game
 //                ByteReader r(body, bodyLen);
 //                const auto err = yuno::net::packets::S2C_Error::Deserialize(r);
 //
-//                const auto code = err.code;         // ?대뼡 ?먮윭媛 ?щ뒗吏
-//                const auto reason = err.reason;     // ??諛쒖깮?덈뒗吏
-//                const auto ctx = err.contextType;   // ?대뼡 ?⑦궥?먯꽌 諛쒖깮?덈뒗吏
+//                const auto code = err.code;         // ??堉??癒?쑎揶쎛 ???쀯쭪?
+//                const auto reason = err.reason;     // ??獄쏆뮇源??덈뮉筌왖
+//                const auto ctx = err.contextType;   // ??堉????땅?癒?퐣 獄쏆뮇源??덈뮉筌왖
 //
 //
-//                // MatchEnter 嫄곕? 泥섎━
+//                // MatchEnter 椰꾧퀡? 筌ｌ꼶??
 //                if (code == yuno::net::packets::ErrorCode::EnterDenied &&
 //                    ctx == PacketType::C2S_MatchEnter)
 //                {
@@ -359,7 +364,7 @@ namespace yuno::game
 //
 //                GameManager& gm = GameManager::Get();
 //
-//                // ?대뼡 移대뱶 寃곌낵?몄? (吏湲덉? 濡쒓렇??
+//                // ??堉?燁삳?諭?野껉퀗??紐? (筌왖疫뀀뜆? 嚥≪뮄???
 //                std::cout << "[Client] BattleResult runtimeCardId="
 //                    << pkt.runtimeCardId
 //                    << " ownerSlot=" << static_cast<int>(pkt.ownerSlot)
@@ -391,18 +396,18 @@ namespace yuno::game
 //                std::cout << "Battle Packet(actionTime) : " << static_cast<int>(pkt.actionTime) << std::endl;
 //
 //                gm.PushBattlePacket(br);
-//                gm.PushRevealPacket(br);// 蹂듭궗 ???
+//                gm.PushRevealPacket(br);// 癰귣벊沅?????
 //                gm.UpdatePanels(br);
 //                gm.SetSceneState(CurrentSceneState::AutoBattle);
 //                gm.SetCoinToss(static_cast<int>(pkt.isCoinTossUsed));
 //
-//                // ?닿굅?뚮Ц??????移대뱶 ?쒖텧?섍퀬 ?낅뜲?댄듃 ?섎뒗 ?쒓컙 誘몃땲留??놁뼱???곗쭚
+//                // ??욧탢?????????燁삳?諭???뽱뀱??랁???낅쑓??꾨뱜 ??롫뮉 ??볦퍢 沃섎챶?뀐쭕???곷선???怨쀬춾
 //                //gm.UpdatePanels(br);
-//                // MK 異붽?
-//                // 寃뚯엫 留ㅻ땲? ?먯뿉 push.
+//                // MK ?곕떽?
+//                // 野껊슣??筌띲끇??? ?癒?퓠 push.
 //
 //
-//                // ?붾쾭源낆슜
+//                // ?遺얠쒔繹먮굞??
 //                std::cout
 //                    << "\n------------------------------\n"
 //                    << "    [BattleResult Packet]"
@@ -461,7 +466,7 @@ namespace yuno::game
 //                        << "\n";
 //                }
 //
-//                // ?섏쨷???ш린??GameManager濡??섍린硫???
+//                // ??륁㉦????由??GameManager嚥???띾┛筌???
 //                // GameManager::Get().SetDrawCandidates(pkt.cards);
 //            }
 //        ); // DrawCandidates Packet End
@@ -556,7 +561,7 @@ namespace yuno::game
 //                        << "\n";
 //                }
 //
-//                // 寃곌낵 ?먯젙
+//                // 野껉퀗???癒?젟
 //                const uint8_t p1Wins = pkt.results[0].winCount;
 //                const uint8_t p2Wins = pkt.results[1].winCount;
 //
@@ -623,7 +628,7 @@ namespace yuno::game
 //                auto pkt =
 //                    yuno::net::packets::S2C_ObstacleResult::Deserialize(r);
 //
-//                //?ш린??寃뚯엫留ㅻ땲???留뚮뱺 ?⑥닔 媛?몄????대씪???섏삱嫄?援ы쁽?섍린
+//                //??由??野껊슣?ワ쭕?삳빍????筌띾슢諭???λ땾 揶쎛?紐??????????륁궞椰??닌뗭겱??띾┛
 //
 //                std::cout
 //                    << "[Client] ObstacleResult received "

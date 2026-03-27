@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "TcpServer.h"
+#include "MySqlAuthRepository.h"
 
 namespace yuno::net
 {
@@ -40,13 +41,17 @@ namespace yuno::login
         void OnPacket(std::shared_ptr<yuno::net::TcpSession> session, std::vector<std::uint8_t>&& packetBytes);
         void OnDisconnected(std::shared_ptr<yuno::net::TcpSession> session, const boost::system::error_code& ec);
         void Update(float deltaSeconds);
-        void SendLoginAccepted(std::shared_ptr<yuno::net::TcpSession> session, std::uint64_t sid);
+        void SendLoginAccepted(std::shared_ptr<yuno::net::TcpSession> session, std::uint64_t sid, const std::string& token, std::uint64_t accountDbId, std::uint64_t expiresAtEpoch);
+        void SendLoginRejected(std::shared_ptr<yuno::net::TcpSession> session, const char* reason);
 
     private:
         boost::asio::io_context m_io;
         yuno::net::TcpServer m_server;
+        yuno::login::MySqlAuthRepository m_authRepo;
         std::unordered_map<std::uint64_t, LoginSessionState> m_sessions;
         std::chrono::steady_clock::time_point m_prevTickTime{};
+        std::string m_gameHost = "127.0.0.1";
+        std::uint16_t m_gamePort = 9000;
+        std::uint32_t m_tokenTtlSeconds = 30 * 60;
     };
 }
-

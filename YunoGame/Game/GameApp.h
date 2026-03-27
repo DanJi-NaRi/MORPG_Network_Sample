@@ -18,6 +18,8 @@ public:
 
 private:
     yuno::game::YunoClientNetwork m_clientNet;
+    bool m_loginRequestSent = false;
+    bool m_loginResponsePrinted = false;
     //std::unique_ptr<GameManager> m_gameManager;
 };
 

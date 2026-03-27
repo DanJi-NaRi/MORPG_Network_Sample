@@ -3,6 +3,10 @@
     "Name": "새 프로필",
     "Projects": [
       {
+        "Path": "YunoLoginServer\\YunoLoginServer.vcxproj",
+        "Action": "StartWithoutDebugging"
+      },
+      {
         "Path": "YunoServer\\YunoServer.vcxproj",
         "Action": "StartWithoutDebugging"
       },
