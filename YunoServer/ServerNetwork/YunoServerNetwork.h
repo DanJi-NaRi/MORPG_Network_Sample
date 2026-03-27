@@ -1,21 +1,12 @@
-#pragma once
+﻿#pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <memory>
+#include <unordered_map>
+#include <vector>
 
-#include "TcpServer.h"          // YunoNetTransport
-#include "PacketDispatcher.h"   // YunoNetProtocol
-#include "NetPeer.h"            // YunoNetProtocol
-#include "MatchManager.h"
-#include "ServerCardRuntime.h"
-#include "ServerCardManager.h"
-#include "ServerCardRangeManager.h"
-#include "ServerObstacleManager.h"
-#include "RoundController.h"
-#include "ServerCardDealer.h"
-#include "TurnManager.h"
-#include "PlayerCardController.h"
-#include "BattleState.h"
+#include "TcpServer.h"
 
 namespace yuno::net
 {
@@ -37,35 +28,27 @@ namespace yuno::server
         void Tick();
         void Stop();
 
-        yuno::net::PacketDispatcher& Dispatcher() { return m_dispatcher; }
-
-        // 래퍼
-    public:
-        void Broadcast(std::vector<std::uint8_t>&& bytes);
-
         std::shared_ptr<yuno::net::TcpSession> FindSession(std::uint64_t sessionId);
-        void OnDisconnected(std::uint64_t sessionId);
-        // 핸들러 등록
-    public:
-        void RegisterMatchPacketHandler();
+        std::size_t GetSessionCount() const;
 
     private:
+        void OnPacket(std::shared_ptr<yuno::net::TcpSession> session, std::vector<std::uint8_t>&& packetBytes);
+        void OnDisconnected(std::shared_ptr<yuno::net::TcpSession> session, const boost::system::error_code& ec);
+        void Update(float deltaSeconds);
+
+    private:
+        struct PlayerRuntimeState
+        {
+            std::uint64_t sessionId = 0;
+            float x = 0.0f;
+            float y = 0.0f;
+            float z = 0.0f;
+        };
+
         boost::asio::io_context m_io;
         yuno::net::TcpServer m_server;
-        yuno::net::PacketDispatcher m_dispatcher{ yuno::net::PacketDispatcher::EndpointRole::Server };
-    
-        // 매치 데이터
-    private:
-        MatchManager m_match;
-        bool m_countdownSent = false;
-        
-        ServerCardDealer  m_cardDealer;
-        ServerCardManager m_cardDB;
-        ServerCardRangeManager m_cardRangeDB;
-        ServerObstacleManager m_obstacleDB;
-        ServerCardRuntime m_cardRuntime;
-        RoundController m_roundController;
-        TurnManager m_turnManager;
-        PlayerCardController m_cardController;
+
+        std::unordered_map<std::uint64_t, PlayerRuntimeState> m_players;
+        std::chrono::steady_clock::time_point m_prevTickTime{};
     };
 }

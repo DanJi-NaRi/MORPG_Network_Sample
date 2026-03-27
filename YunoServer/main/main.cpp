@@ -1,26 +1,29 @@
+﻿#include <chrono>
+#include <cstdint>
 #include <iostream>
+#include <thread>
 
 #include "YunoServerNetwork.h"
 
 int main(int argc, char** argv)
 {
     std::uint16_t port = 9000;
-
-    yuno::server::YunoServerNetwork serverNet;
-    if (!serverNet.Start(port)) return 1;
-
-    std::cout << "[YunoServer] Running. port=" << port << "\n";
-
-    // 단일 스레드 서버 루프
-    while (true)
+    if (argc >= 2)
     {
-        serverNet.Tick();                 // asio 이벤트 처리
-        std::this_thread::sleep_for(
-            std::chrono::milliseconds(1)  // CPU 점유율 완화
-        );
+        const int parsed = std::atoi(argv[1]);
+        if (parsed > 0 && parsed <= 65535)
+            port = static_cast<std::uint16_t>(parsed);
     }
 
-    // 여기 도달 안 함 (강제 종료)
-    // serverNet.Stop();
-    // return 0;
+    yuno::server::YunoServerNetwork server;
+    if (!server.Start(port))
+        return 1;
+
+    std::cout << "[YunoServer] realtime base server running. port=" << port << "\n";
+
+    while (true)
+    {
+        server.Tick();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
 }

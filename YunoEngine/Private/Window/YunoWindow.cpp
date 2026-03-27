@@ -230,21 +230,21 @@ LRESULT CALLBACK YunoWindow::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
         SetCursor(window->m_normalCursor);
         return 0;
     }
-    //case WM_RBUTTONDOWN:
-    //case WM_RBUTTONUP:
-    //{
-    //    if (IInput* input = YunoEngine::GetInput())
-    //    {
-    //        InputEvent evt{};
-    //        evt.type = (msg == WM_RBUTTONDOWN) ? InputEventType::MouseButtonDown
-    //            : InputEventType::MouseButtonUp;
-    //        evt.key = 1; // RMB
-    //        evt.x = static_cast<float>(GET_X_LPARAM(lParam));
-    //        evt.y = static_cast<float>(GET_Y_LPARAM(lParam));
-    //        input->PushEvent(evt);
-    //    }
-    //    return 0;
-    //}
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    {
+        if (IInput* input = YunoEngine::GetInput())
+        {
+            InputEvent evt{};
+            evt.type = (msg == WM_RBUTTONDOWN) ? InputEventType::MouseButtonDown
+                : InputEventType::MouseButtonUp;
+            evt.key = 1; // RMB
+            evt.x = static_cast<float>(GET_X_LPARAM(lParam));
+            evt.y = static_cast<float>(GET_Y_LPARAM(lParam));
+            input->PushEvent(evt);
+        }
+        return 0;
+    }
     case WM_MBUTTONDOWN:
     case WM_MBUTTONUP:
     {

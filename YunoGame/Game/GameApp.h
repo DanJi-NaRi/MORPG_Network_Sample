@@ -3,7 +3,6 @@
 #include "IGameApp.h"
 #include "IAudioManager.h"
 #include "YunoClientNetwork.h"
-#include "GameManager.h"
 
 class GameApp : public IGameApp
 {
@@ -19,7 +18,7 @@ public:
 
 private:
     yuno::game::YunoClientNetwork m_clientNet;
-    std::unique_ptr<GameManager> m_gameManager;
+    //std::unique_ptr<GameManager> m_gameManager;
 };
 
 

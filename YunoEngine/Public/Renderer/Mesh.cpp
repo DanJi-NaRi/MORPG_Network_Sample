@@ -205,6 +205,15 @@ void Mesh::AnimSubmit(const std::vector<XMFLOAT4X4>& animTM)
     }
 }
 
+void Mesh::EnableSkinningDefaultPose()
+{
+    m_renderItem.haveAnim = true;
+    for (UINT i = 0; i < MAX_BONE; ++i)
+    {
+        XMStoreFloat4x4(&m_renderItem.Constant.boneAnim[i], XMMatrixIdentity());
+    }
+}
+
 void Mesh::LastSubmit()
 {
     YunoEngine::GetRenderer()->Submit(m_renderItem);

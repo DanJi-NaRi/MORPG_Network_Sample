@@ -2,9 +2,7 @@
 
 #include "SceneBase.h"
 
-class AnimTest;
-
-class RenderTest final : public SceneBase
+class TestScene final : public SceneBase
 {
 public:
     void OnEnter() override;
@@ -14,18 +12,12 @@ public:
     void SubmitObj() override;
     void SubmitUI() override;
 
-    const char* GetDebugName() const override { return "RenderTest"; }
+    const char* GetDebugName() const override { return "TestScene"; }
 
 protected:
     bool OnCreateScene() override;
     void OnDestroyScene() override;
 
 private:
-    AnimTest* gun;
-    AnimTest* axe;
-    AnimTest* scythe;
-    AnimTest* blade;
-    AnimTest* breacher;
-    AnimTest* chakram01;
-    AnimTest* chakram02;
+
 };

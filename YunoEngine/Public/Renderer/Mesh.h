@@ -86,6 +86,7 @@ public:
     void Submit(const XMFLOAT4X4& mWorld, const XMFLOAT3& pos);
     void SubmitWidget(const XMFLOAT4X4& mWorld, const XMFLOAT3& pos, const Update_Data& updateData);
     void AnimSubmit(const std::vector<XMFLOAT4X4>& animTM);
+    void EnableSkinningDefaultPose();
     void LastSubmit();
 
     RenderItem& GetRenderItem() { return m_renderItem; }

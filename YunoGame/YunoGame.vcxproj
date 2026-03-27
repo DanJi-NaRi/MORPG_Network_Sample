@@ -29,27 +29,23 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset> <VCToolsVersion>14.44.35207</VCToolsVersion> <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset> <VCToolsVersion>14.44.35207</VCToolsVersion> <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset> <VCToolsVersion>14.44.35207</VCToolsVersion> <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset> <VCToolsVersion>14.44.35207</VCToolsVersion> <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -190,72 +186,8 @@ xcopy /y /d "$(SolutionDir)Assets\Sound\*.dll" "$(TargetDir)"</Command>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AddCardPanel.cpp" />
-    <ClCompile Include="CardConfirmArea.cpp" />
-    <ClCompile Include="CheckPanel.cpp" />
-    <ClCompile Include="CountdownImage.cpp" />
-    <ClCompile Include="CountdownScene.cpp" />
-    <ClCompile Include="EmoteButton.cpp" />
-    <ClCompile Include="EscScene.cpp" />
-    <ClCompile Include="Game\UI\DirSelectButton.cpp" />
-    <ClCompile Include="OptionButton.cpp" />
-    <ClCompile Include="PlayMidScene.cpp" />
-    <ClCompile Include="Scenes\PlayHUDScene.cpp" />
-    <ClCompile Include="Game\UI\TextureImage.cpp" />
-    <ClCompile Include="Game\UI\VolumePanel.cpp" />
-    <ClCompile Include="Game\UI\VolumeTrackButton.cpp" />
-    <ClCompile Include="Game\UI\WidgetGridLine.cpp" />
-    <ClCompile Include="GuideScene.cpp" />
-    <ClCompile Include="Minimap.cpp" />
-    <ClCompile Include="MinimapTile.cpp" />
-    <ClCompile Include="PhaseWeaponSelectButton.cpp" />
-    <ClCompile Include="OptionScene.cpp" />
-    <ClCompile Include="PlayerIcon.cpp" />
-    <ClCompile Include="Emoji.cpp" />
-    <ClCompile Include="Game\UI\CardCancelButton.cpp" />
-    <ClCompile Include="Game\UI\CardConfirmButton.cpp" />
-    <ClCompile Include="Game\UI\CardConfirmPanel.cpp" />
-    <ClCompile Include="Game\UI\CardSelectionPanel.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="HealthGauge.cpp" />
-    <ClCompile Include="HealthBar.cpp" />
-    <ClCompile Include="Game\UI\PopButton.cpp" />
-    <ClCompile Include="ResultPanel.cpp" />
-    <ClCompile Include="ResultScene.cpp" />
-    <ClCompile Include="SceneChangeButton.cpp" />
-    <ClCompile Include="ShowCardDeck.cpp" />
-    <ClCompile Include="PhaseStaminaBar.cpp" />
-    <ClCompile Include="SpeechBubble.cpp" />
-    <ClCompile Include="StaminaBar.cpp" />
-    <ClCompile Include="StaminaGauge.cpp" />
-    <ClCompile Include="StandByScene.cpp" />
-    <ClCompile Include="System\BattlePackets.cpp" />
-    <ClCompile Include="System\CardManager.cpp" />
-    <ClCompile Include="System\CardRangeManager.cpp" />
-    <ClCompile Include="Game\Object\TypeRegisterTemplate.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="Game\UI\ButtonTemplate.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="Game\UI\CardSlot.cpp" />
-    <ClCompile Include="Game\Object\Test_Unit.cpp" />
-    <ClCompile Include="Game\UI\ExitButton.cpp" />
-    <ClCompile Include="Game\UI\ReadyButton.cpp" />
-    <ClCompile Include="Game\UI\TitleImage.cpp" />
-    <ClCompile Include="Game\UI\UserImage.cpp" />
-    <ClCompile Include="Game\Object\Grid.cpp" />
-    <ClCompile Include="System\MinimapQueue.cpp" />
-    <ClCompile Include="GameManager\GameManager.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="Game\UI\Card.cpp" />
-    <ClCompile Include="Game\UI\PhasePanel.cpp" />
+    <ClCompile Include="Game\Object\Building.cpp" />
+    <ClCompile Include="Scenes\TestScene.cpp" />
     <ClCompile Include="ClientNetwork\YunoClientNetwork.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
@@ -265,166 +197,38 @@ xcopy /y /d "$(SolutionDir)Assets\Sound\*.dll" "$(TargetDir)"</Command>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Game\GameApp.cpp" />
-    <ClCompile Include="Game\Object\AnimTest.cpp" />
-    <ClCompile Include="Game\Object\Building.cpp" />
-    <ClCompile Include="Game\Object\Dwarf.cpp" />
-    <ClCompile Include="Scenes\PhaseScene.cpp" />
-    <ClCompile Include="Scenes\RenderTest.cpp" />
-    <ClCompile Include="System\GridFactory.cpp" />
-    <ClCompile Include="System\MinimapGridSystem.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="System\PlayGridSystem.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="Game\Object\Triangle.cpp" />
-    <ClCompile Include="Game\Object\Quad.cpp" />
-    <ClCompile Include="System\PlayQueue.cpp" />
-    <ClCompile Include="Scenes\PlayScene.cpp">
+    <ClCompile Include="main.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Scenes\SceneTemplate\SceneTemplate.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="Scenes\TitleScene.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="Scenes\UIScene.cpp" />
-    <ClCompile Include="Scenes\WeaponSelectScene.cpp" />
-    <ClCompile Include="Game\UI\WeaponButton.cpp" />
-    <ClCompile Include="Scenes\Title.cpp" />
-    <ClCompile Include="Game\Object\UnitGridBox.cpp" />
-    <ClCompile Include="Game\Object\UnitGridLine.cpp" />
-    <ClCompile Include="Game\Object\UnitGridSystem.cpp" />
-    <ClCompile Include="Game\Object\UnitPiece.cpp" />
-    <ClCompile Include="Game\Object\UnitTile.cpp" />
-    <ClCompile Include="Game\UI\WidgetPiece.cpp" />
-    <ClCompile Include="Game\UI\WidgetTile.cpp" />
-    <ClCompile Include="WeaponNameImage.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AddCardPanel.h" />
-    <ClInclude Include="CardConfirmArea.h" />
-    <ClInclude Include="CheckPanel.h" />
-    <ClInclude Include="CountdownImage.h" />
-    <ClInclude Include="CountdownScene.h" />
-    <ClInclude Include="EmoteButton.h" />
-    <ClInclude Include="EscScene.h" />
-    <ClInclude Include="EscScene_inputContext.h" />
-    <ClInclude Include="Game\UI\DirSelectButton.h" />
-    <ClInclude Include="PlayHUD_InputContext.h" />
-    <ClInclude Include="PlayMidScene.h" />
-    <ClInclude Include="PlayMidScene_InputContext.h" />
-    <ClInclude Include="Scenes\PlayHUDScene.h" />
-    <ClInclude Include="Game\UI\PopButton.h" />
-    <ClInclude Include="Game\UI\TextureImage.h" />
-    <ClInclude Include="Game\UI\VolumePanel.h" />
-    <ClInclude Include="Game\UI\VolumeTrackButton.h" />
-    <ClInclude Include="Game\UI\WidgetGridLine.h" />
-    <ClInclude Include="GuideScene.h" />
-    <ClInclude Include="GuideScene_InputContext.h" />
-    <ClInclude Include="Minimap.h" />
-    <ClInclude Include="MinimapTile.h" />
-    <ClInclude Include="PhaseWeaponSelectButton.h" />
-    <ClInclude Include="OptionButton.h" />
-    <ClInclude Include="OptionScene.h" />
-    <ClInclude Include="OptionScene_InputContext.h" />
-    <ClInclude Include="PlayerIcon.h" />
-    <ClInclude Include="Emoji.h" />
-    <ClInclude Include="Game\UI\CardCancelButton.h" />
-    <ClInclude Include="Game\UI\CardConfirmButton.h" />
-    <ClInclude Include="Game\UI\CardConfirmPanel.h" />
-    <ClInclude Include="Game\UI\CardSelectionPanel.h" />
-    <ClInclude Include="HealthGauge.h" />
-    <ClInclude Include="HealthBar.h" />
-    <ClInclude Include="ResultPanel.h" />
-    <ClInclude Include="ResultScene.h" />
-    <ClInclude Include="ResultScene_inputContext.h" />
-    <ClInclude Include="SceneChangeButton.h" />
-    <ClInclude Include="ShowCardDeck.h" />
-    <ClInclude Include="PhaseStaminaBar.h" />
-    <ClInclude Include="SpeechBubble.h" />
-    <ClInclude Include="StaminaBar.h" />
-    <ClInclude Include="StaminaGauge.h" />
-    <ClInclude Include="StandByScene.h" />
-    <ClInclude Include="System\BattlePackets.h" />
-    <ClInclude Include="System\CardManager.h" />
-    <ClInclude Include="Game\Object\CardQueue.h" />
-    <ClInclude Include="System\CardRangeManager.h" />
-    <ClInclude Include="GameManager\SceneState.h" />
-    <ClInclude Include="Game\UI\ButtonTemplate.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="Game\UI\CardSlot.h" />
-    <ClInclude Include="Game\Object\Test_Unit.h" />
-    <ClInclude Include="Game\UI\ExitButton.h" />
-    <ClInclude Include="Game\UI\ReadyButton.h" />
-    <ClInclude Include="Game\UI\TitleImage.h" />
-    <ClInclude Include="Game\UI\UserImage.h" />
-    <ClInclude Include="Game\Object\Grid.h" />
-    <ClInclude Include="System\MinimapQueue.h" />
-    <ClInclude Include="GameManager\GameManager.h" />
-    <ClInclude Include="Game\UI\Card.h" />
-    <ClInclude Include="Game\UI\PhasePanel.h" />
+    <ClInclude Include="Game\Object\Building.h" />
+    <ClInclude Include="Scenes\TestScene.h" />
     <ClInclude Include="ClientNetwork\YunoClientNetwork.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="GamePCH\pch.h" />
     <ClInclude Include="Game\GameApp.h" />
-    <ClInclude Include="Game\Object\AnimTest.h" />
-    <ClInclude Include="Game\Object\Building.h" />
-    <ClInclude Include="Game\Object\Dwarf.h" />
-    <ClInclude Include="Game\Object\Triangle.h" />
-    <ClInclude Include="Game\Object\Quad.h" />
-    <ClInclude Include="Game\Object\CardData.h" />
-    <ClInclude Include="Scenes\PhaseScene.h" />
-    <ClInclude Include="System\PhaseScene_InputContext.h" />
-    <ClInclude Include="Scenes\RenderTest.h" />
-    <ClInclude Include="System\GridFactory.h" />
-    <ClInclude Include="System\MinimapGridSystem.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="Game\Object\PieceHelper.h" />
-    <ClInclude Include="System\PlayGridSystem.h" />
-    <ClInclude Include="System\IGridSystem.h" />
-    <ClInclude Include="System\PlayQueue.h" />
-    <ClInclude Include="Scenes\PlayScene.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="Scenes\SceneTemplate\SceneTemplate.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="Scenes\TitleScene.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="Scenes\UIScene.h" />
-    <ClInclude Include="System\Game_InputContext.h" />
-    <ClInclude Include="System\SettingScene_InputContext.h" />
-    <ClInclude Include="Game\Object\TileHelper.h" />
-    <ClInclude Include="System\UIScene_InputContext.h" />
-    <ClInclude Include="Game\UI\UIWidgets.h" />
-    <ClInclude Include="Scenes\WeaponSelectScene.h" />
-    <ClInclude Include="Game\UI\WeaponButton.h" />
-    <ClInclude Include="Scenes\Title.h" />
-    <ClInclude Include="Game\Object\UnitGridBox.h" />
-    <ClInclude Include="Game\Object\UnitGridLine.h" />
-    <ClInclude Include="Game\Object\UnitGridSystem.h" />
-    <ClInclude Include="Game\Object\UnitPiece.h" />
-    <ClInclude Include="Game\Object\UnitTile.h" />
-    <ClInclude Include="System\WeaponSelectScene_InputContext.h" />
-    <ClInclude Include="Game\UI\WidgetPiece.h" />
-    <ClInclude Include="Game\UI\WidgetTile.h" />
-    <ClInclude Include="TitleScene_InputContext.h" />
-    <ClInclude Include="UI_InputContext.h" />
     <ClInclude Include="utilityClass.h" />
-    <ClInclude Include="WeaponNameImage.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>
+
+
+
+
+
+
+

@@ -11,20 +11,13 @@
 
 #include "Widget.h"
 
-#include "Title.h"
-#include "TitleScene.h"
-#include "PlayScene.h"
-#include "PlayHUDScene.h"
-#include "UIScene.h"
-#include "PhaseScene.h"
-#include "WeaponSelectScene.h"
-#include "RenderTest.h"
-#include "PlayMidScene.h"
+#include"TestScene.h"
+
 
 #include "AudioQueue.h"
-#include "PlayQueue.h"
 
-#include "CardManager.h"
+
+
 
 #include "GameApp.h"
 
@@ -35,8 +28,8 @@
 // 패킷들
 
 #include "C2S_Ping.h"
-#include "C2S_MatchEnter.h"
-#include "C2S_MatchLeave.h"
+//#include "C2S_MatchEnter.h"
+//#include "C2S_MatchLeave.h"
 
 
 
@@ -68,10 +61,10 @@ bool GameApp::OnInit()
    ISceneManager* sm = YunoEngine::GetSceneManager();
    if (!sm) return false;
    
-   m_gameManager = std::make_unique<GameManager>();
-   GameManager::Initialize(m_gameManager.get());
-   m_gameManager->BindClientNetwork(&m_clientNet);
-   GameManager::Get().Init();
+   //m_gameManager = std::make_unique<GameManager>();
+   //GameManager::Initialize(m_gameManager.get());
+   //m_gameManager->BindClientNetwork(&m_clientNet);
+   //GameManager::Get().Init();
 
    SceneTransitionOptions opt{};
    opt.immediate = true;
@@ -82,7 +75,7 @@ bool GameApp::OnInit()
    //sm->RequestReplaceRoot(std::make_unique<WeaponSelectScene>(), opt);
 
    //sm->RequestReplaceRoot(std::make_unique<PlayMidScene>(), opt);
-   sm->RequestReplaceRoot(std::make_unique<Title>(), opt); 
+   sm->RequestReplaceRoot(std::make_unique<TestScene>(), opt); 
    /*{
        sm->RequestReplaceRoot(std::make_unique<PlayScene>(), opt);
        sm->RequestPush(std::make_unique<PlayHUDScene>());
@@ -106,7 +99,7 @@ bool GameApp::OnInit()
 
 void GameApp::OnUpdate(float dt)
 {
-    m_gameManager->Tick(dt);
+    //m_gameManager->Tick(dt);
     m_clientNet.PumpIncoming(dt);
 
     static float acc = 0.0f;
@@ -115,7 +108,7 @@ void GameApp::OnUpdate(float dt)
     acc += dt;
     ++frameCount;
 
-    //CameraMove(dt);
+    CameraMove(dt);
 
     // MSAA 변경되는지 테스트
     //static float test = 0.0f;
@@ -261,8 +254,8 @@ void GameApp::OnShutdown()
 {
     std::cout << "[GameApp] OnShutdown\n";
 
-    GameManager::Shutdown();
-    m_gameManager.reset();
+    //GameManager::Shutdown();
+    //m_gameManager.reset();
 
     // 네트워크 스레드종료
     m_clientNet.Stop();

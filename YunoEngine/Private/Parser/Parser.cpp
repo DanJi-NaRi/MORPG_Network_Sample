@@ -402,6 +402,8 @@ std::unique_ptr<MeshNode> CreateNode(aiNode* node, const aiScene* scene, int nod
 
         auto model = std::make_unique<Mesh>();
         model->Create(meshkey, matkey);
+        if (aiMesh->HasBones())
+            model->EnableSkinningDefaultPose();
         model->SetName(meshname);
 
         meshnode->m_Meshs.push_back(std::move(model));
