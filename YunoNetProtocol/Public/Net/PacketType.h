@@ -33,6 +33,8 @@ namespace yuno::net
         C2S_SkillCast = 16,
         C2S_Interact = 17,
         C2S_AckSnapshot = 18,
+        C2S_AuthRegister = 19,
+        C2S_AuthLogout = 20,
 
         // S2C (legacy game-specific)
         S2C_EnterOK = 128,

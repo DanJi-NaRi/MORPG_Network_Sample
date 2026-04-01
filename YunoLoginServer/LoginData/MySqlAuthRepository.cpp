@@ -145,12 +145,12 @@ namespace yuno::login
         return true;
     }
 
-    bool MySqlAuthRepository::ValidateAccount(
-        const std::string& accountId,
+    bool MySqlAuthRepository::ValidateUserCredentials(
+        const std::string& username,
         const std::string& password,
-        std::uint64_t& outAccountDbId)
+        std::uint64_t& outUserId)
     {
-        outAccountDbId = 0;
+        outUserId = 0;
 
         if (!m_conn)
         {
@@ -158,15 +158,15 @@ namespace yuno::login
             return false;
         }
 
-        const std::string escapedAccount = Escape(accountId);
+        const std::string escapedUsername = Escape(username);
         const std::string escapedPw = Escape(password);
 
         std::ostringstream oss;
-        oss << "SELECT id FROM accounts WHERE account_id='"
-            << escapedAccount
-            << "' AND password='"
+        oss << "SELECT user_id FROM users WHERE username='"
+            << escapedUsername
+            << "' AND password_hash='"
             << escapedPw
-            << "' LIMIT 1";
+            << "' AND status=1 LIMIT 1";
 
         if (mysql_query(m_conn, oss.str().c_str()) != 0)
         {
@@ -189,14 +189,52 @@ namespace yuno::login
             return false;
         }
 
-        outAccountDbId = static_cast<std::uint64_t>(std::strtoull(row[0], nullptr, 10));
+        outUserId = static_cast<std::uint64_t>(std::strtoull(row[0], nullptr, 10));
         mysql_free_result(result);
         m_lastError.clear();
         return true;
     }
 
+    bool MySqlAuthRepository::CreateUser(const std::string& username, const std::string& password, bool& outAlreadyExists)
+    {
+        outAlreadyExists = false;
+
+        if (!m_conn)
+        {
+            m_lastError = "DB is not connected.";
+            return false;
+        }
+
+        const std::string escapedUsername = Escape(username);
+        const std::string escapedPw = Escape(password);
+
+        std::ostringstream oss;
+        oss << "INSERT INTO users(username, password_hash, status, created_at) VALUES ('"
+            << escapedUsername
+            << "', '"
+            << escapedPw
+            << "', 1, NOW())";
+
+        if (mysql_query(m_conn, oss.str().c_str()) != 0)
+        {
+            const unsigned int errNo = mysql_errno(m_conn);
+            if (errNo == 1062U)
+            {
+                outAlreadyExists = true;
+                m_lastError = "Account already exists.";
+                return false;
+            }
+
+            m_lastError = mysql_error(m_conn);
+            return false;
+        }
+
+        m_lastError.clear();
+        return true;
+    }
+
     bool MySqlAuthRepository::UpsertLoginToken(
-        std::uint64_t accountDbId,
+        std::uint64_t userId,
         const std::string& token,
         std::uint32_t ttlSeconds,
         std::uint64_t& outExpiresAtEpoch)
@@ -212,17 +250,84 @@ namespace yuno::login
         const std::uint64_t nowEpoch = static_cast<std::uint64_t>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
         outExpiresAtEpoch = nowEpoch + static_cast<std::uint64_t>(ttlSeconds);
 
-        const std::string escapedToken = Escape(token);
+        const std::string escapedTokenHash = Escape(token);
 
         std::ostringstream oss;
-        oss << "INSERT INTO login_tokens(account_id, token, expires_at, created_at) VALUES ("
-            << accountDbId
+        oss << "INSERT INTO login_tokens(user_id, token_hash, ip_address, created_at, expires_at) VALUES ("
+            << userId
             << ", '"
-            << escapedToken
-            << "', FROM_UNIXTIME("
+            << escapedTokenHash
+            << "', NULL, NOW(), FROM_UNIXTIME("
             << outExpiresAtEpoch
-            << "), NOW()) "
-            << "ON DUPLICATE KEY UPDATE account_id=VALUES(account_id), expires_at=VALUES(expires_at), created_at=VALUES(created_at)";
+            << ")) "
+            << "ON DUPLICATE KEY UPDATE token_hash=VALUES(token_hash), ip_address=VALUES(ip_address), "
+            << "expires_at=VALUES(expires_at), created_at=VALUES(created_at), revoked_at=NULL";
+
+        return Execute(oss.str());
+    }
+
+    bool MySqlAuthRepository::TouchLastLogin(std::uint64_t userId)
+    {
+        std::ostringstream oss;
+        oss << "UPDATE users SET last_login_at=NOW() WHERE user_id=" << userId;
+        return Execute(oss.str());
+    }
+
+    bool MySqlAuthRepository::HasActiveLoginToken(std::uint64_t userId, bool& outHasActiveToken)
+    {
+        outHasActiveToken = false;
+
+        if (!m_conn)
+        {
+            m_lastError = "DB is not connected.";
+            return false;
+        }
+
+        std::ostringstream oss;
+        oss << "SELECT token_id FROM login_tokens "
+            << "WHERE user_id=" << userId
+            << " AND revoked_at IS NULL "
+            << "AND expires_at > NOW() "
+            << "LIMIT 1";
+
+        if (mysql_query(m_conn, oss.str().c_str()) != 0)
+        {
+            m_lastError = mysql_error(m_conn);
+            return false;
+        }
+
+        MYSQL_RES* result = mysql_store_result(m_conn);
+        if (!result)
+        {
+            m_lastError = mysql_error(m_conn);
+            return false;
+        }
+
+        MYSQL_ROW row = mysql_fetch_row(result);
+        outHasActiveToken = (row != nullptr && row[0] != nullptr);
+        mysql_free_result(result);
+
+        m_lastError.clear();
+        return true;
+    }
+
+    bool MySqlAuthRepository::RevokeLoginToken(std::uint64_t userId)
+    {
+        std::ostringstream oss;
+        oss << "UPDATE login_tokens "
+            << "SET revoked_at=NOW() "
+            << "WHERE user_id=" << userId << " AND revoked_at IS NULL";
+        return Execute(oss.str());
+    }
+
+    bool MySqlAuthRepository::RevokeLoginTokenByHash(const std::string& tokenHash)
+    {
+        const std::string escapedToken = Escape(tokenHash);
+
+        std::ostringstream oss;
+        oss << "UPDATE login_tokens "
+            << "SET revoked_at=NOW() "
+            << "WHERE token_hash='" << escapedToken << "' AND revoked_at IS NULL";
 
         return Execute(oss.str());
     }

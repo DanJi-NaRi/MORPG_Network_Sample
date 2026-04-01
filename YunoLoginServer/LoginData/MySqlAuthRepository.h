@@ -20,8 +20,13 @@ namespace yuno::login
         void Disconnect();
         bool IsConnected() const;
 
-        bool ValidateAccount(const std::string& accountId, const std::string& password, std::uint64_t& outAccountDbId);
-        bool UpsertLoginToken(std::uint64_t accountDbId, const std::string& token, std::uint32_t ttlSeconds, std::uint64_t& outExpiresAtEpoch);
+        bool ValidateUserCredentials(const std::string& username, const std::string& password, std::uint64_t& outUserId);
+        bool CreateUser(const std::string& username, const std::string& password, bool& outAlreadyExists);
+        bool UpsertLoginToken(std::uint64_t userId, const std::string& token, std::uint32_t ttlSeconds, std::uint64_t& outExpiresAtEpoch);
+        bool TouchLastLogin(std::uint64_t userId);
+        bool HasActiveLoginToken(std::uint64_t userId, bool& outHasActiveToken);
+        bool RevokeLoginToken(std::uint64_t userId);
+        bool RevokeLoginTokenByHash(const std::string& tokenHash);
 
         const std::string& LastError() const { return m_lastError; }
 

@@ -24,8 +24,7 @@
 #include "PacketBuilder.h"
 #include "utilityClass.h"
 
-
-// ???땅??
+// 패킷
 
 #include "C2S_Ping.h"
 //#include "C2S_MatchEnter.h"
@@ -33,115 +32,6 @@
 
 namespace
 {
-    std::uint16_t ReadLoginServerPortFromEnv()
-    {
-        char* buf = nullptr;
-        size_t len = 0;
-
-        // Prefer dedicated login server env.
-        if (_dupenv_s(&buf, &len, "YUNO_LOGIN_SERVER_PORT") == 0 && buf != nullptr)
-        {
-            std::uint16_t port = 7000;
-            try
-            {
-                const unsigned long raw = std::stoul(buf);
-                if (raw >= 1 && raw <= 65535)
-                    port = static_cast<std::uint16_t>(raw);
-            }
-            catch (...)
-            {
-                port = 7000;
-            }
-
-            free(buf);
-            return port;
-        }
-
-        // Fallback: existing server env if provided.
-        if (_dupenv_s(&buf, &len, "YUNO_SERVER_PORT") == 0 && buf != nullptr)
-        {
-            std::uint16_t port = 7000;
-            try
-            {
-                const unsigned long raw = std::stoul(buf);
-                if (raw >= 1 && raw <= 65535)
-                    port = static_cast<std::uint16_t>(raw);
-            }
-            catch (...)
-            {
-                port = 7000;
-            }
-
-            free(buf);
-            return port;
-        }
-
-        return 7000;
-    }
-
-    std::string ReadLoginServerHostFromEnv()
-    {
-        char* buf = nullptr;
-        size_t len = 0;
-
-        if (_dupenv_s(&buf, &len, "YUNO_LOGIN_SERVER_HOST") == 0 && buf != nullptr)
-        {
-            std::string host(buf);
-            free(buf);
-            if (!host.empty())
-                return host;
-        }
-
-        if (_dupenv_s(&buf, &len, "YUNO_SERVER_HOST") == 0 && buf != nullptr)
-        {
-            std::string host(buf);
-            free(buf);
-            if (!host.empty())
-                return host;
-        }
-
-        return "127.0.0.1";
-    }
-
-    std::string ReadEnvTextOrEmpty(const char* name)
-    {
-        if (!name || !(*name))
-            return std::string();
-
-        char* buf = nullptr;
-        size_t len = 0;
-        const errno_t ec = _dupenv_s(&buf, &len, name);
-        if (ec != 0 || !buf)
-            return std::string();
-
-        std::string out(buf);
-        free(buf);
-        return out;
-    }
-
-    std::vector<std::uint8_t> BuildLoginRequestPacket(const std::string& accountId, const std::string& password)
-    {
-        const std::string body = "LOGIN|" + accountId + "|" + password;
-        std::vector<std::uint8_t> packet;
-        packet.resize(8 + body.size());
-
-        const std::uint32_t bodyLen = static_cast<std::uint32_t>(body.size());
-        packet[0] = static_cast<std::uint8_t>(bodyLen & 0xFF);
-        packet[1] = static_cast<std::uint8_t>((bodyLen >> 8) & 0xFF);
-        packet[2] = static_cast<std::uint8_t>((bodyLen >> 16) & 0xFF);
-        packet[3] = static_cast<std::uint8_t>((bodyLen >> 24) & 0xFF);
-        packet[4] = 1;
-        packet[5] = 0;
-        packet[6] = 0;
-        packet[7] = 0;
-
-        for (std::size_t i = 0; i < body.size(); ++i)
-        {
-            packet[8 + i] = static_cast<std::uint8_t>(body[i]);
-        }
-
-        return packet;
-    }
 }
 
 
@@ -168,7 +58,7 @@ bool GameApp::OnInit()
     {
         std::cout << "[GameApp] Renderer not available.\n";
         return false;
-    } // ???쐭??筌ｋ똾寃?
+    } // 렌더러 체크
 
 
    ISceneManager* sm = YunoEngine::GetSceneManager();
@@ -183,7 +73,7 @@ bool GameApp::OnInit()
    opt.immediate = true;
     
 
-   //sm->RequestReplaceRoot(std::make_unique<RenderTest>(), opt);  // 癰귣챷????臾믩씜餓λ쵐?????앮에??節뚯몵筌???
+   //sm->RequestReplaceRoot(std::make_unique<RenderTest>(), opt);  // 본인이 작업 중인 씬으로 교체
    //sm->RequestReplaceRoot(std::make_unique<UIScene>(), opt);
    //sm->RequestReplaceRoot(std::make_unique<WeaponSelectScene>(), opt);
 
@@ -195,47 +85,17 @@ bool GameApp::OnInit()
    }*/
    //sm->RequestReplaceRoot(std::make_unique<PhaseScene>(), opt);
 
-   // UI ??沅???묒눖諭???뽰삂
+   // UI 재사용용 쿼드 생성
    SetupDefWidgetMesh(g_defaultWidgetMesh, renderer);
 
-    // ??쎈뱜??곌쾿 ??살쟿????뽰삂
-   const std::string serverHost = ReadLoginServerHostFromEnv();
-   const std::uint16_t serverPort = ReadLoginServerPortFromEnv();
-   std::cout << "[GameApp] Login connect target=" << serverHost << ":" << serverPort << "\n";
-   m_clientNet.SetRawPacketTap(
-       [this](const std::vector<std::uint8_t>& pkt)
-       {
-           if (m_loginResponsePrinted || pkt.size() < 8)
-               return;
-
-           const std::uint32_t bodyLen = static_cast<std::uint32_t>(pkt[0])
-               | (static_cast<std::uint32_t>(pkt[1]) << 8)
-               | (static_cast<std::uint32_t>(pkt[2]) << 16)
-               | (static_cast<std::uint32_t>(pkt[3]) << 24);
-
-           if (pkt.size() != 8 + bodyLen)
-               return;
-
-           const std::string body(pkt.begin() + 8, pkt.end());
-           if (body.rfind("OK|", 0) == 0)
-           {
-               std::cout << "[GameApp] Login response: " << body << "\n";
-               m_loginResponsePrinted = true;
-               return;
-           }
-
-           if (body.rfind("ERR|", 0) == 0)
-           {
-               std::cout << "[GameApp] Login response: " << body << "\n";
-               m_loginResponsePrinted = true;
-               return;
-           }
-       });
-
+    // 네트워크 스레드 시작
+   const std::string serverHost = ReadServerHostFromEnv();
+   const std::uint16_t serverPort = ReadServerPortFromEnv();
+   std::cout << "[GameApp] Connect target=" << serverHost << ":" << serverPort << "\n";
    m_clientNet.Start(serverHost, serverPort);
     //m_clientNet.Start("127.0.0.1", 9000);
 
-    m_clientNet.RegisterMatchPacketHandler();
+   m_clientNet.RegisterMatchPacketHandler();
 
     return true;
 }
@@ -245,20 +105,6 @@ void GameApp::OnUpdate(float dt)
     //m_gameManager->Tick(dt);
     m_clientNet.PumpIncoming(dt);
 
-    if (!m_loginRequestSent && m_clientNet.IsConnected())
-    {
-        const std::string accountId = ReadEnvTextOrEmpty("YUNO_LOGIN_ID");
-        const std::string password = ReadEnvTextOrEmpty("YUNO_LOGIN_PW");
-
-        if (!accountId.empty() && !password.empty())
-        {
-            auto loginPacket = BuildLoginRequestPacket(accountId, password);
-            m_clientNet.SendPacket(std::move(loginPacket));
-            std::cout << "[GameApp] LOGIN request sent. id=" << accountId << "\n";
-            m_loginRequestSent = true;
-        }
-    }
-
     static float acc = 0.0f;
     static int frameCount = 0;
 
@@ -267,7 +113,7 @@ void GameApp::OnUpdate(float dt)
 
     CameraMove(dt);
 
-    // MSAA 癰궰野껋럥由?遺? ???뮞??
+    // MSAA 변경 테스트
     //static float test = 0.0f;
     //test += dt;
     //
@@ -292,10 +138,10 @@ void GameApp::OnUpdate(float dt)
     ISceneManager* sm = YunoEngine::GetSceneManager();
     IAudioManager* am = YunoEngine::GetAudioManager();
 
-    if (input->IsKeyDown('I')) // >> ??욧탢 ?紐꾨뮞??곷뮞 ?紐꾪뀱??곴퐣 ??삳뼄??꾨릭?遺쎄탢 ?븍뜇???롫빍繹???륁㉦??獄쏅떽?疫??湲깃쉐
+    if (input->IsKeyDown('I')) // 테스트용 해상도 단축키
         window->SetClientSize(960, 540);
 
-    if (input->IsKeyDown('O')) // >> ??욧탢 ?紐꾨뮞??곷뮞 ?紐꾪뀱??곴퐣 ??삳뼄??꾨릭?遺쎄탢 ?븍뜇???롫빍繹???륁㉦??獄쏅떽?疫??湲깃쉐
+    if (input->IsKeyDown('O')) // 테스트용 해상도 단축키
         window->SetClientSize(1920, 1080);
 
     if (input->IsKeyDown('P'))
@@ -414,7 +260,7 @@ void GameApp::OnShutdown()
     //GameManager::Shutdown();
     //m_gameManager.reset();
 
-    // ??쎈뱜??곌쾿 ??살쟿??뽰쪒??
+    // 네트워크 스레드 종료
     m_clientNet.Stop();
 
     //if (m_net)

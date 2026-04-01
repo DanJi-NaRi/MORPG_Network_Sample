@@ -147,6 +147,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Public\Net\C2SPackets\C2S_AuthLogout.h" />
+    <ClInclude Include="Public\Net\C2SPackets\C2S_AuthRegister.h" />
+    <ClInclude Include="Public\Net\C2SPackets\C2S_AuthHello.h" />
     <ClInclude Include="ProtocolPCH\pch.h" />
     <ClInclude Include="Public\Net\C2SPackets\C2S_Ping.h" />
     <ClInclude Include="Public\Net\ByteIO.h" />
@@ -155,10 +158,14 @@
     <ClInclude Include="Public\Net\PacketBuilder.h" />
     <ClInclude Include="Public\Net\PacketDispatcher.h" />
     <ClInclude Include="Public\Net\PacketHeader.h" />
+    <ClInclude Include="Public\Net\S2CPackets\S2C_AuthResult.h" />
     <ClInclude Include="Public\Net\S2CPackets\S2C_Pong.h" />
     <ClInclude Include="Public\Net\PacketType.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Private\Net\C2SPackets\C2S_AuthLogout.cpp" />
+    <ClCompile Include="Private\Net\C2SPackets\C2S_AuthRegister.cpp" />
+    <ClCompile Include="Private\Net\C2SPackets\C2S_AuthHello.cpp" />
     <ClCompile Include="Private\Net\ErrorPackets\S2C_Error.cpp" />
     <ClCompile Include="ProtocolPCH\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -170,6 +177,7 @@
     <ClCompile Include="Private\Net\PacketBuilder.cpp" />
     <ClCompile Include="Private\Net\PacketDispatcher.cpp" />
     <ClCompile Include="Private\Net\C2SPackets\C2S_Ping.cpp" />
+    <ClCompile Include="Private\Net\S2CPackets\S2C_AuthResult.cpp" />
     <ClCompile Include="Private\Net\S2CPackets\S2C_Pong.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

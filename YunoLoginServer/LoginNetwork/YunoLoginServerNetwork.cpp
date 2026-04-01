@@ -5,12 +5,37 @@
 #include <iostream>
 #include <random>
 #include <sstream>
+#include <stdexcept>
 #include <utility>
+
+#include "ByteIO.h"
+#include "C2S_AuthHello.h"
+#include "C2S_AuthLogout.h"
+#include "C2S_AuthRegister.h"
+#include "PacketBuilder.h"
+#include "PacketHeader.h"
+#include "PacketType.h"
+#include "S2C_AuthResult.h"
 
 namespace yuno::login
 {
     namespace
     {
+        enum class AuthOp : std::uint8_t
+        {
+            Login = 1,
+            Register = 2,
+            Logout = 3,
+        };
+
+        struct AuthRequest
+        {
+            AuthOp op = AuthOp::Login;
+            std::string loginId;
+            std::string password;
+            std::string token;
+        };
+
         std::string ReadEnvValue(const char* name)
         {
             if (!name || !(*name))
@@ -62,25 +87,53 @@ namespace yuno::login
             return static_cast<std::uint32_t>(parsed);
         }
 
-        std::vector<std::string> SplitByPipe(const std::string& text)
+        bool TryParseAuthRequest(const std::vector<std::uint8_t>& packetBytes, AuthRequest& outReq)
         {
-            std::vector<std::string> out;
-            std::string current;
+            if (packetBytes.size() < yuno::net::yunoPacketHeaderSize)
+                return false;
 
-            for (char ch : text)
+            const yuno::net::PacketHeader header = yuno::net::UnPackHeaderLE(packetBytes.data());
+
+            const std::size_t expectedSize =
+                yuno::net::yunoPacketHeaderSize + static_cast<std::size_t>(header.bodyLength);
+            if (packetBytes.size() != expectedSize)
+                return false;
+
+            try
             {
-                if (ch == '|')
+                yuno::net::ByteReader reader(packetBytes.data() + yuno::net::yunoPacketHeaderSize, header.bodyLength);
+                if (header.type == yuno::net::PacketType::C2S_AuthHello)
                 {
-                    out.push_back(current);
-                    current.clear();
-                    continue;
+                    const yuno::net::packets::C2S_AuthHello hello = yuno::net::packets::C2S_AuthHello::Deserialize(reader);
+                    outReq.op = AuthOp::Login;
+                    outReq.loginId = hello.loginId;
+                    outReq.password = hello.password;
+                    return reader.Remaining() == 0;
                 }
 
-                current.push_back(ch);
-            }
+                if (header.type == yuno::net::PacketType::C2S_AuthRegister)
+                {
+                    const yuno::net::packets::C2S_AuthRegister reg = yuno::net::packets::C2S_AuthRegister::Deserialize(reader);
+                    outReq.op = AuthOp::Register;
+                    outReq.loginId = reg.loginId;
+                    outReq.password = reg.password;
+                    return reader.Remaining() == 0;
+                }
 
-            out.push_back(current);
-            return out;
+                if (header.type == yuno::net::PacketType::C2S_AuthLogout)
+                {
+                    const yuno::net::packets::C2S_AuthLogout logoutReq = yuno::net::packets::C2S_AuthLogout::Deserialize(reader);
+                    outReq.op = AuthOp::Logout;
+                    outReq.token = logoutReq.token;
+                    return reader.Remaining() == 0;
+                }
+
+                return false;
+            }
+            catch (const std::exception&)
+            {
+                return false;
+            }
         }
 
         std::string MakeLoginToken(std::uint64_t sid)
@@ -99,32 +152,6 @@ namespace yuno::login
 
             oss << std::setw(16) << sid;
             return oss.str();
-        }
-
-        void SendAsciiPacket(std::shared_ptr<yuno::net::TcpSession> session, std::uint8_t packetType, const std::string& payload)
-        {
-            if (!session)
-                return;
-
-            std::vector<std::uint8_t> packet;
-            packet.resize(8 + payload.size());
-
-            const std::uint32_t bodyLen = static_cast<std::uint32_t>(payload.size());
-            packet[0] = static_cast<std::uint8_t>(bodyLen & 0xFF);
-            packet[1] = static_cast<std::uint8_t>((bodyLen >> 8) & 0xFF);
-            packet[2] = static_cast<std::uint8_t>((bodyLen >> 16) & 0xFF);
-            packet[3] = static_cast<std::uint8_t>((bodyLen >> 24) & 0xFF);
-            packet[4] = packetType;
-            packet[5] = 0;
-            packet[6] = 0;
-            packet[7] = 0;
-
-            for (std::size_t i = 0; i < payload.size(); ++i)
-            {
-                packet[8 + i] = static_cast<std::uint8_t>(payload[i]);
-            }
-
-            session->Send(std::move(packet));
         }
     }
 
@@ -202,60 +229,141 @@ namespace yuno::login
             return;
 
         const std::uint64_t sid = session->GetSessionId();
+        std::cout << "[LoginServer] packet received sid=" << sid << " bytes=" << packetBytes.size() << "\n";
         auto& state = m_sessions[sid];
         state.sessionId = sid;
-
-        if (packetBytes.empty())
-        {
-            SendLoginRejected(session, "EMPTY");
-            return;
-        }
 
         if (state.authenticated)
             return;
 
-        const std::string request(packetBytes.begin(), packetBytes.end());
-        const std::vector<std::string> parts = SplitByPipe(request);
-        if (parts.size() < 3 || parts[0] != "LOGIN")
+        AuthRequest request;
+        if (!TryParseAuthRequest(packetBytes, request))
         {
-            SendLoginRejected(session, "FORMAT");
+            SendLoginRejected(session, yuno::net::packets::AuthResultCode::Format, "FORMAT");
             return;
         }
 
-        const std::string& accountId = parts[1];
-        const std::string& password = parts[2];
+        const std::string& username = request.loginId;
+        const std::string& password = request.password;
 
-        if (accountId.empty() || password.empty())
+        if (request.op == AuthOp::Logout)
         {
-            SendLoginRejected(session, "EMPTY_CREDENTIAL");
+            if (request.token.empty())
+            {
+                SendLoginRejected(session, yuno::net::packets::AuthResultCode::Format, "EMPTY_TOKEN");
+                return;
+            }
+
+            if (!m_authRepo.RevokeLoginTokenByHash(request.token))
+            {
+                SendLoginRejected(session, yuno::net::packets::AuthResultCode::DbError, "DB");
+                std::cout << "[LoginServer] logout failed sid=" << sid << " reason=" << m_authRepo.LastError() << "\n";
+                return;
+            }
+
+            yuno::net::packets::S2C_AuthResult result{};
+            result.success = 1;
+            result.code = yuno::net::packets::AuthResultCode::None;
+            result.message = "LOGOUT_OK";
+
+            auto bytes = yuno::net::PacketBuilder::Build(
+                yuno::net::PacketType::S2C_AuthResult,
+                [&result](yuno::net::ByteWriter& w)
+                {
+                    result.Serialize(w);
+                });
+
+            session->Send(std::move(bytes));
             return;
         }
 
-        std::uint64_t accountDbId = 0;
-        if (!m_authRepo.ValidateAccount(accountId, password, accountDbId))
+        if (username.empty() || password.empty())
         {
-            SendLoginRejected(session, "AUTH");
+            SendLoginRejected(session, yuno::net::packets::AuthResultCode::EmptyCredential, "EMPTY_CREDENTIAL");
+            return;
+        }
+
+        if (request.op == AuthOp::Register)
+        {
+            bool alreadyExists = false;
+            if (!m_authRepo.CreateUser(username, password, alreadyExists))
+            {
+                if (alreadyExists)
+                {
+                    SendLoginRejected(session, yuno::net::packets::AuthResultCode::AccountExists, "ACCOUNT_EXISTS");
+                    return;
+                }
+
+                SendLoginRejected(session, yuno::net::packets::AuthResultCode::RegisterFailed, "REGISTER_FAILED");
+                std::cout << "[LoginServer] register failed sid=" << sid << " reason=" << m_authRepo.LastError() << "\n";
+                return;
+            }
+
+            yuno::net::packets::S2C_AuthResult result{};
+            result.success = 1;
+            result.code = yuno::net::packets::AuthResultCode::None;
+            result.message = "REGISTER_OK";
+
+            auto bytes = yuno::net::PacketBuilder::Build(
+                yuno::net::PacketType::S2C_AuthResult,
+                [&result](yuno::net::ByteWriter& w)
+                {
+                    result.Serialize(w);
+                });
+
+            session->Send(std::move(bytes));
+            std::cout << "[LoginServer] register success sid=" << sid << " username=" << username << "\n";
+            return;
+        }
+
+        std::uint64_t userId = 0;
+        if (!m_authRepo.ValidateUserCredentials(username, password, userId))
+        {
+            SendLoginRejected(session, yuno::net::packets::AuthResultCode::AuthFailed, "AUTH");
             std::cout << "[LoginServer] auth failed sid=" << sid << " reason=" << m_authRepo.LastError() << "\n";
+            return;
+        }
+
+        bool hasActiveToken = false;
+        if (!m_authRepo.HasActiveLoginToken(userId, hasActiveToken))
+        {
+            SendLoginRejected(session, yuno::net::packets::AuthResultCode::DbError, "DB");
+            std::cout << "[LoginServer] active token check failed sid=" << sid << " userId=" << userId
+                      << " reason=" << m_authRepo.LastError() << "\n";
+            return;
+        }
+        if (hasActiveToken)
+        {
+            SendLoginRejected(session, yuno::net::packets::AuthResultCode::AlreadyLoggedIn, "ALREADY_LOGIN");
+            std::cout << "[LoginServer] already login sid=" << sid << " userId=" << userId << "\n";
             return;
         }
 
         const std::string token = MakeLoginToken(sid);
         std::uint64_t expiresAtEpoch = 0;
-        if (!m_authRepo.UpsertLoginToken(accountDbId, token, m_tokenTtlSeconds, expiresAtEpoch))
+        if (!m_authRepo.UpsertLoginToken(userId, token, m_tokenTtlSeconds, expiresAtEpoch))
         {
-            SendLoginRejected(session, "DB");
+            SendLoginRejected(session, yuno::net::packets::AuthResultCode::DbError, "DB");
             std::cout << "[LoginServer] token issue failed sid=" << sid << " reason=" << m_authRepo.LastError() << "\n";
             return;
         }
 
-        state.authenticated = true;
-        state.accountId = accountId;
+        if (!m_authRepo.TouchLastLogin(userId))
+        {
+            std::cout << "[LoginServer] last_login_at update failed userId=" << userId
+                      << " reason=" << m_authRepo.LastError() << "\n";
+        }
 
-        SendLoginAccepted(session, sid, token, accountDbId, expiresAtEpoch);
+        state.authenticated = true;
+        state.userId = userId;
+        state.username = username;
+
+        (void)expiresAtEpoch;
+        SendLoginAccepted(session, token);
 
         std::cout << "[LoginServer] login accepted sid=" << sid
-                  << " account=" << accountId
-                  << " accountDbId=" << accountDbId << "\n";
+                  << " username=" << username
+                  << " userId=" << userId << "\n";
     }
 
     void YunoLoginServerNetwork::OnDisconnected(std::shared_ptr<yuno::net::TcpSession> session, const boost::system::error_code& ec)
@@ -279,26 +387,47 @@ namespace yuno::login
 
     void YunoLoginServerNetwork::SendLoginAccepted(
         std::shared_ptr<yuno::net::TcpSession> session,
-        std::uint64_t sid,
-        const std::string& token,
-        std::uint64_t accountDbId,
-        std::uint64_t expiresAtEpoch)
+        const std::string& token)
     {
-        const std::string payload =
-            "OK|"
-            + m_gameHost + "|"
-            + std::to_string(m_gamePort) + "|"
-            + token + "|"
-            + std::to_string(accountDbId) + "|"
-            + std::to_string(expiresAtEpoch) + "|"
-            + std::to_string(sid);
+        yuno::net::packets::S2C_AuthResult result{};
+        result.success = 1;
+        result.code = yuno::net::packets::AuthResultCode::None;
+        result.message = "OK";
+        result.gameHost = m_gameHost;
+        result.gamePort = m_gamePort;
+        result.loginToken = token;
 
-        SendAsciiPacket(session, 1, payload);
+        auto bytes = yuno::net::PacketBuilder::Build(
+            yuno::net::PacketType::S2C_AuthResult,
+            [&result](yuno::net::ByteWriter& w)
+            {
+                result.Serialize(w);
+            });
+
+        session->Send(std::move(bytes));
     }
 
-    void YunoLoginServerNetwork::SendLoginRejected(std::shared_ptr<yuno::net::TcpSession> session, const char* reason)
+    void YunoLoginServerNetwork::SendLoginRejected(
+        std::shared_ptr<yuno::net::TcpSession> session,
+        yuno::net::packets::AuthResultCode code,
+        const char* reason)
     {
-        const std::string payload = "ERR|" + std::string(reason ? reason : "UNKNOWN");
-        SendAsciiPacket(session, 2, payload);
+        if (!session)
+            return;
+
+        yuno::net::packets::S2C_AuthResult result{};
+        result.success = 0;
+        result.code = code;
+        result.message = reason ? std::string(reason) : std::string("UNKNOWN");
+        result.gamePort = 0;
+
+        auto bytes = yuno::net::PacketBuilder::Build(
+            yuno::net::PacketType::S2C_AuthResult,
+            [&result](yuno::net::ByteWriter& w)
+            {
+                result.Serialize(w);
+            });
+
+        session->Send(std::move(bytes));
     }
 }
