@@ -2902,7 +2902,7 @@ void YunoRenderer::CreateDebugMeshResources()
             uint32_t i3 = i2 + 1;
 
             // Triangle 1
-            idx.push_back({ i0, i2, i2 });
+            idx.push_back({ i0, i2, i1 });
 
             // Triangle 2
             idx.push_back({ i1, i2, i3 });
@@ -2919,7 +2919,7 @@ void YunoRenderer::CreateDebugMeshResources()
 
     VertexStreams vs;
     vs.flags = VSF_Pos;
-    vs.vtx_count = v.size() * 3;
+    vs.vtx_count = static_cast<std::uint32_t>(v.size());
     vs.pos = v.data();
 
     m_debugSphereMeshHandle = CreateMesh(vs, idx.data(), idx.size());

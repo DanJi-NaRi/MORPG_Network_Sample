@@ -24,12 +24,15 @@
 #include "PacketBuilder.h"
 #include "utilityClass.h"
 
-
-// 패킷들
+// 패킷
 
 #include "C2S_Ping.h"
 //#include "C2S_MatchEnter.h"
 //#include "C2S_MatchLeave.h"
+
+namespace
+{
+}
 
 
 
@@ -70,7 +73,7 @@ bool GameApp::OnInit()
    opt.immediate = true;
     
 
-   //sm->RequestReplaceRoot(std::make_unique<RenderTest>(), opt);  // 본인이 작업중인 씬으로 넣으면 됨
+   //sm->RequestReplaceRoot(std::make_unique<RenderTest>(), opt);  // 본인이 작업 중인 씬으로 교체
    //sm->RequestReplaceRoot(std::make_unique<UIScene>(), opt);
    //sm->RequestReplaceRoot(std::make_unique<WeaponSelectScene>(), opt);
 
@@ -82,7 +85,7 @@ bool GameApp::OnInit()
    }*/
    //sm->RequestReplaceRoot(std::make_unique<PhaseScene>(), opt);
 
-   // UI 재사용 쿼드 제작
+   // UI 재사용용 쿼드 생성
    SetupDefWidgetMesh(g_defaultWidgetMesh, renderer);
 
     // 네트워크 스레드 시작
@@ -92,7 +95,7 @@ bool GameApp::OnInit()
    m_clientNet.Start(serverHost, serverPort);
     //m_clientNet.Start("127.0.0.1", 9000);
 
-    m_clientNet.RegisterMatchPacketHandler();
+   m_clientNet.RegisterMatchPacketHandler();
 
     return true;
 }
@@ -110,7 +113,7 @@ void GameApp::OnUpdate(float dt)
 
     CameraMove(dt);
 
-    // MSAA 변경되는지 테스트
+    // MSAA 변경 테스트
     //static float test = 0.0f;
     //test += dt;
     //
@@ -135,10 +138,10 @@ void GameApp::OnUpdate(float dt)
     ISceneManager* sm = YunoEngine::GetSceneManager();
     IAudioManager* am = YunoEngine::GetAudioManager();
 
-    if (input->IsKeyDown('I')) // >> 이거 인스턴스 호출해서 키다운하는거 불편하니까 나중에 바꾸기 ㄱㄱ
+    if (input->IsKeyDown('I')) // 테스트용 해상도 단축키
         window->SetClientSize(960, 540);
 
-    if (input->IsKeyDown('O')) // >> 이거 인스턴스 호출해서 키다운하는거 불편하니까 나중에 바꾸기 ㄱㄱ
+    if (input->IsKeyDown('O')) // 테스트용 해상도 단축키
         window->SetClientSize(1920, 1080);
 
     if (input->IsKeyDown('P'))
@@ -257,7 +260,7 @@ void GameApp::OnShutdown()
     //GameManager::Shutdown();
     //m_gameManager.reset();
 
-    // 네트워크 스레드종료
+    // 네트워크 스레드 종료
     m_clientNet.Stop();
 
     //if (m_net)

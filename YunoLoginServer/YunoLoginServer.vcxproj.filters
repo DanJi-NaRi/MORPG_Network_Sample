@@ -7,19 +7,27 @@
     <Filter Include="LoginNetwork">
       <UniqueIdentifier>{52ca999f-d268-4f3e-a3f0-136d7a91373d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="LoginData">
+      <UniqueIdentifier>{BFB2D28C-9B35-4DB8-B241-CA6E06C9A17E}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main\main.cpp">
       <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="LoginData\MySqlAuthRepository.cpp">
+      <Filter>LoginData</Filter>
     </ClCompile>
     <ClCompile Include="LoginNetwork\YunoLoginServerNetwork.cpp">
       <Filter>LoginNetwork</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="LoginData\MySqlAuthRepository.h">
+      <Filter>LoginData</Filter>
+    </ClInclude>
     <ClInclude Include="LoginNetwork\YunoLoginServerNetwork.h">
       <Filter>LoginNetwork</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
-

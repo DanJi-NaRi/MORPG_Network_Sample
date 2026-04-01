@@ -1,6 +1,7 @@
 #pragma once
 
 #include <boost/asio.hpp>
+#include <functional>
 
 #include "TcpClient.h"          // YunoNetTransport
 #include "PacketDispatcher.h"   // YunoNetProtocol
@@ -10,7 +11,7 @@ class GameManager;
 
 namespace yuno::game
 {
-    // 게임 메인 <-> 네트워크 스레드 연결용 래퍼
+    // 寃뚯엫 硫붿씤 <-> ?ㅽ듃?뚰겕 ?ㅻ젅???곌껐???섑띁
     class YunoClientNetwork final
     {
     public:
@@ -25,16 +26,18 @@ namespace yuno::game
 
         bool IsConnected() const;
 
-        // 서버한테 받은 패킷을 디스패쳐로 전달
+        // ?쒕쾭?쒗뀒 諛쏆? ?⑦궥???붿뒪?⑥퀜濡??꾨떖
         void PumpIncoming(float dt);
 
-        // 메인 스레드에서 호출: "완성 패킷(헤더+바디)" 바이트를 송신 요청
+        // 硫붿씤 ?ㅻ젅?쒖뿉???몄텧: "?꾩꽦 ?⑦궥(?ㅻ뜑+諛붾뵒)" 諛붿씠?몃? ?≪떊 ?붿껌
         void SendPacket(std::vector<std::uint8_t> packetBytes);
 
-        // 게임에서 핸들러 등록할 수 있게 dispatcher 접근 제공
+        // 寃뚯엫?먯꽌 ?몃뱾???깅줉?????덇쾶 dispatcher ?묎렐 ?쒓났
         yuno::net::PacketDispatcher& Dispatcher() { return m_dispatcher; }
+        using RawPacketTapFn = std::function<void(const std::vector<std::uint8_t>& packetBytes)>;
+        void SetRawPacketTap(RawPacketTapFn fn) { m_rawPacketTap = std::move(fn); }
 
-        // 핸들러 등록
+        // ?몃뱾???깅줉
     public:
         void RegisterMatchPacketHandler();
 
@@ -54,11 +57,12 @@ namespace yuno::game
 
         // --- Main thread processing ---
         yuno::net::PacketDispatcher m_dispatcher{ yuno::net::PacketDispatcher::EndpointRole::Client };
-        yuno::net::NetPeer m_serverPeer{}; // client는 서버 peer를 하나로 취급 (sId=0으로 시작)
+        yuno::net::NetPeer m_serverPeer{}; // client???쒕쾭 peer瑜??섎굹濡?痍④툒 (sId=0?쇰줈 ?쒖옉)
 
         // --- Incoming queue (net thread -> main thread) ---
         std::mutex m_inMtx;
         std::deque<std::vector<std::uint8_t>> m_inQ;
+        RawPacketTapFn m_rawPacketTap;
 
 
     };
