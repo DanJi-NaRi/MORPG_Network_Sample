@@ -1,4 +1,6 @@
-#pragma once
+﻿#pragma once
+
+#include <cstdint>
 
 #include "IGameApp.h"
 #include "IAudioManager.h"
@@ -17,7 +19,13 @@ public:
 
 
 private:
+    static constexpr float kInputSendIntervalSeconds = 1.0f / 30.0f;
+
     yuno::game::YunoClientNetwork m_clientNet;
+    bool m_enterWorldRequested = false;
+    std::uint32_t m_moveClientTick = 0;
+    std::uint32_t m_moveSequence = 0;
+    float m_inputSendAccumulator = 0.0f;
     //std::unique_ptr<GameManager> m_gameManager;
 };
 

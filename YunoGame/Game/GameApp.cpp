@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 
 #include "RenderTypes.h"
@@ -22,16 +22,41 @@
 #include "GameApp.h"
 
 #include "PacketBuilder.h"
+#include "WorldPlayerState.h"
 #include "utilityClass.h"
+#include <cstdlib>
+#include <string>
 
-// 패킷
+// ???땅
 
 #include "C2S_Ping.h"
+#include "C2S_EnterWorld.h"
+#include "C2S_MoveInput.h"
 //#include "C2S_MatchEnter.h"
 //#include "C2S_MatchLeave.h"
 
 namespace
 {
+    constexpr std::uint32_t kBlasterCharacterId = 1001;
+
+    std::string ReadEnvOrDefault(const char* name, const char* fallback)
+    {
+        if (!name || !(*name))
+            return fallback ? std::string(fallback) : std::string();
+
+        char* buffer = nullptr;
+        std::size_t size = 0;
+        const errno_t ec = _dupenv_s(&buffer, &size, name);
+        if (ec != 0 || !buffer)
+            return fallback ? std::string(fallback) : std::string();
+
+        std::string value(buffer);
+        std::free(buffer);
+        if (value.empty())
+            return fallback ? std::string(fallback) : std::string();
+
+        return value;
+    }
 }
 
 
@@ -58,7 +83,7 @@ bool GameApp::OnInit()
     {
         std::cout << "[GameApp] Renderer not available.\n";
         return false;
-    } // 렌더러 체크
+    } // ???쐭??筌ｋ똾寃?
 
 
    ISceneManager* sm = YunoEngine::GetSceneManager();
@@ -73,7 +98,7 @@ bool GameApp::OnInit()
    opt.immediate = true;
     
 
-   //sm->RequestReplaceRoot(std::make_unique<RenderTest>(), opt);  // 본인이 작업 중인 씬으로 교체
+   //sm->RequestReplaceRoot(std::make_unique<RenderTest>(), opt);  // 癰귣챷????臾믩씜 餓λ쵐?????앮에??대Ŋ猿?
    //sm->RequestReplaceRoot(std::make_unique<UIScene>(), opt);
    //sm->RequestReplaceRoot(std::make_unique<WeaponSelectScene>(), opt);
 
@@ -85,10 +110,10 @@ bool GameApp::OnInit()
    }*/
    //sm->RequestReplaceRoot(std::make_unique<PhaseScene>(), opt);
 
-   // UI 재사용용 쿼드 생성
+   // UI ??沅??뱀뒠 ?묒눖諭???밴쉐
    SetupDefWidgetMesh(g_defaultWidgetMesh, renderer);
 
-    // 네트워크 스레드 시작
+    // ??쎈뱜??곌쾿 ??살쟿????뽰삂
    const std::string serverHost = ReadServerHostFromEnv();
    const std::uint16_t serverPort = ReadServerPortFromEnv();
    std::cout << "[GameApp] Connect target=" << serverHost << ":" << serverPort << "\n";
@@ -105,6 +130,29 @@ void GameApp::OnUpdate(float dt)
     //m_gameManager->Tick(dt);
     m_clientNet.PumpIncoming(dt);
 
+    if (m_clientNet.IsConnected() && !m_enterWorldRequested)
+    {
+        using namespace yuno::net;
+
+        yuno::net::packets::C2S_EnterWorld enterWorld{};
+        enterWorld.characterId = kBlasterCharacterId;
+        enterWorld.spawnRegionId = 0;
+        enterWorld.loginToken = ReadEnvOrDefault("YUNO_LOGIN_TOKEN", "");
+
+        auto bytes = PacketBuilder::Build(
+            PacketType::C2S_EnterWorld,
+            [&enterWorld](ByteWriter& w)
+            {
+                enterWorld.Serialize(w);
+            });
+
+        m_clientNet.SendPacket(std::move(bytes));
+        m_enterWorldRequested = true;
+
+        std::cout << "[GameApp] enter-world requested with Blaster characterId="
+            << kBlasterCharacterId << "\n";
+    }
+
     static float acc = 0.0f;
     static int frameCount = 0;
 
@@ -113,7 +161,7 @@ void GameApp::OnUpdate(float dt)
 
     CameraMove(dt);
 
-    // MSAA 변경 테스트
+    // MSAA 癰궰野????뮞??
     //static float test = 0.0f;
     //test += dt;
     //
@@ -138,10 +186,10 @@ void GameApp::OnUpdate(float dt)
     ISceneManager* sm = YunoEngine::GetSceneManager();
     IAudioManager* am = YunoEngine::GetAudioManager();
 
-    if (input->IsKeyDown('I')) // 테스트용 해상도 단축키
+    if (input->IsKeyDown('I')) // ???뮞?紐꾩뒠 ??곴맒????ν뀧??
         window->SetClientSize(960, 540);
 
-    if (input->IsKeyDown('O')) // 테스트용 해상도 단축키
+    if (input->IsKeyDown('O')) // ???뮞?紐꾩뒠 ??곴맒????ν뀧??
         window->SetClientSize(1920, 1080);
 
     if (input->IsKeyDown('P'))
@@ -222,20 +270,77 @@ void GameApp::OnUpdate(float dt)
             m_clientNet.SendPacket(std::move(bytes));
         }
 
+        std::uint32_t localEntityId = 0;
+        const bool hasLocalPlayer = yuno::game::TryGetLocalPlayerEntityId(localEntityId);
+        if (hasLocalPlayer)
+        {
+            std::int16_t moveX = 0;
+            std::int16_t moveY = 0;
+
+            if (input->IsKeyDown(VK_LEFT))
+                moveX -= 1;
+            if (input->IsKeyDown(VK_RIGHT))
+                moveX += 1;
+            if (input->IsKeyDown(VK_UP))
+                moveY += 1;
+            if (input->IsKeyDown(VK_DOWN))
+                moveY -= 1;
+
+            m_inputSendAccumulator += dt;
+            while (m_inputSendAccumulator >= kInputSendIntervalSeconds)
+            {
+                m_inputSendAccumulator -= kInputSendIntervalSeconds;
+
+                yuno::net::packets::C2S_MoveInput moveInput{};
+                moveInput.entityId = localEntityId;
+
+                yuno::net::packets::MoveInputFrame frame{};
+                frame.clientTick = ++m_moveClientTick;
+                frame.sequence = ++m_moveSequence;
+                frame.moveX = moveX;
+                frame.moveY = moveY;
+                frame.buttons = 0;
+                moveInput.frames.push_back(frame);
+
+                auto moveBytes = yuno::net::PacketBuilder::Build(
+                    yuno::net::PacketType::C2S_MoveInput,
+                    [&moveInput](yuno::net::ByteWriter& w)
+                    {
+                        moveInput.Serialize(w);
+                    });
+
+                m_clientNet.SendPacket(std::move(moveBytes));
+                yuno::game::PublishLocalInput(frame.sequence, frame.moveX, frame.moveY);
+            }
+        }
+        else
+        {
+            m_inputSendAccumulator = 0.0f;
+        }
+
     }
 
     // audio-> StateCheck();
 
 
 
-    //if (acc >= 1.0f)
-    //{
-    //    std::cout << "[GameApp] dt = " << dt << "\n";
-    //    const float fps = static_cast<float>(frameCount) / acc;
-    //    std::cout << "[GameApp] FPS = " << fps << "\n";
-    //    acc = 0.0f;
-    //    frameCount = 0;
-    //}
+    if (acc >= 1.0f)
+    {
+        const float fps = static_cast<float>(frameCount) / acc;
+        const auto netInfo = m_clientNet.GetSnapshotAckDebugInfo();
+        const std::uint32_t ackGapSnapshots =
+            (netInfo.lastReceivedSnapshotId >= netInfo.lastServerSeenAckSnapshotId)
+            ? (netInfo.lastReceivedSnapshotId - netInfo.lastServerSeenAckSnapshotId)
+            : 0;
+
+        std::cout << "[GameApp] FPS=" << fps
+            << " Snapshot(recv=" << netInfo.lastReceivedSnapshotId
+            << " ackSent=" << netInfo.lastSentAckSnapshotId
+            << " serverAck=" << netInfo.lastServerSeenAckSnapshotId
+            << " gap=" << ackGapSnapshots << ")\n";
+        acc = 0.0f;
+        frameCount = 0;
+    }
 
 
 
@@ -260,7 +365,7 @@ void GameApp::OnShutdown()
     //GameManager::Shutdown();
     //m_gameManager.reset();
 
-    // 네트워크 스레드 종료
+    // ??쎈뱜??곌쾿 ??살쟿???ル굝利?
     m_clientNet.Stop();
 
     //if (m_net)

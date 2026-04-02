@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include <algorithm>
 #include <cstring>
@@ -34,6 +34,7 @@ namespace yuno::net::packets
     {
         w.WriteU32LE(entityId);
         w.WriteU32LE(stateFlags);
+        w.WriteU32LE(lastProcessedInputSequence);
         WriteF32(w, x);
         WriteF32(w, y);
         WriteF32(w, z);
@@ -48,6 +49,7 @@ namespace yuno::net::packets
         EntityPoseState s{};
         s.entityId = r.ReadU32LE();
         s.stateFlags = r.ReadU32LE();
+        s.lastProcessedInputSequence = r.ReadU32LE();
         s.x = ReadF32(r);
         s.y = ReadF32(r);
         s.z = ReadF32(r);

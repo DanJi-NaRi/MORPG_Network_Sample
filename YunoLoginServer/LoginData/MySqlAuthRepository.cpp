@@ -1,10 +1,16 @@
 #include "MySqlAuthRepository.h"
 
 #include <chrono>
+#include <algorithm>
+#include <cstring>
 #include <cstdlib>
+#include <limits>
+#include <random>
 #include <sstream>
+#include <vector>
 
 #include <mysql.h>
+#include <argon2.h>
 
 namespace
 {
@@ -44,6 +50,74 @@ namespace
             return fallback;
 
         return static_cast<unsigned int>(parsed);
+    }
+
+    constexpr std::uint32_t kArgon2TimeCost = 2;
+    constexpr std::uint32_t kArgon2MemoryCostKiB = 32 * 1024;
+    constexpr std::uint32_t kArgon2Parallelism = 1;
+    constexpr std::size_t kArgon2SaltLength = 16;
+    constexpr std::size_t kArgon2HashLength = 32;
+
+    bool FillSecureRandom(std::uint8_t* outBytes, std::size_t len)
+    {
+        if (!outBytes || len == 0)
+            return false;
+
+        std::random_device rd;
+        for (std::size_t i = 0; i < len; ++i)
+        {
+            outBytes[i] = static_cast<std::uint8_t>(rd());
+        }
+
+        return true;
+    }
+
+    bool IsArgon2idHash(const std::string& stored)
+    {
+        return stored.rfind("$argon2id$", 0) == 0;
+    }
+
+    bool HashPasswordArgon2id(const std::string& password, std::string& outEncodedHash)
+    {
+        std::vector<std::uint8_t> salt(kArgon2SaltLength);
+        if (!FillSecureRandom(salt.data(), salt.size()))
+            return false;
+
+        const std::size_t encodedLen = argon2_encodedlen(
+            kArgon2TimeCost,
+            kArgon2MemoryCostKiB,
+            kArgon2Parallelism,
+            static_cast<std::uint32_t>(kArgon2SaltLength),
+            static_cast<std::uint32_t>(kArgon2HashLength),
+            Argon2_id);
+
+        if (encodedLen == 0 || encodedLen > static_cast<std::size_t>((std::numeric_limits<int>::max)()))
+            return false;
+
+        std::vector<char> encoded(encodedLen, '\0');
+        const int rc = argon2id_hash_encoded(
+            kArgon2TimeCost,
+            kArgon2MemoryCostKiB,
+            kArgon2Parallelism,
+            password.data(),
+            password.size(),
+            salt.data(),
+            salt.size(),
+            kArgon2HashLength,
+            encoded.data(),
+            encoded.size());
+
+        if (rc != ARGON2_OK)
+            return false;
+
+        outEncodedHash = encoded.data();
+        return !outEncodedHash.empty();
+    }
+
+    bool VerifyPasswordArgon2id(const std::string& encodedHash, const std::string& password)
+    {
+        const int rc = argon2id_verify(encodedHash.c_str(), password.data(), password.size());
+        return rc == ARGON2_OK;
     }
 }
 
@@ -162,10 +236,11 @@ namespace yuno::login
         const std::string escapedPw = Escape(password);
 
         std::ostringstream oss;
-        oss << "SELECT user_id FROM users WHERE username='"
+        oss << "SELECT user_id, password_hash, "
+            << "(password_hash=SHA2('" << escapedPw << "', 256)) AS legacy_sha256_match, "
+            << "(password_hash='" << escapedPw << "') AS legacy_plaintext_match "
+            << "FROM users WHERE username='"
             << escapedUsername
-            << "' AND password_hash='"
-            << escapedPw
             << "' AND status=1 LIMIT 1";
 
         if (mysql_query(m_conn, oss.str().c_str()) != 0)
@@ -182,15 +257,59 @@ namespace yuno::login
         }
 
         MYSQL_ROW row = mysql_fetch_row(result);
-        if (!row || !row[0])
+        if (!row || !row[0] || !row[1])
         {
             mysql_free_result(result);
             m_lastError = "Invalid account or password.";
             return false;
         }
 
-        outUserId = static_cast<std::uint64_t>(std::strtoull(row[0], nullptr, 10));
+        const std::uint64_t matchedUserId = static_cast<std::uint64_t>(std::strtoull(row[0], nullptr, 10));
+        const std::string storedHash = row[1];
+        const bool legacySha256Match = (row[2] != nullptr && std::strtoul(row[2], nullptr, 10) != 0UL);
+        const bool legacyPlaintextMatch = (row[3] != nullptr && std::strtoul(row[3], nullptr, 10) != 0UL);
         mysql_free_result(result);
+
+        bool authenticated = false;
+        bool needsMigration = false;
+
+        if (IsArgon2idHash(storedHash))
+        {
+            authenticated = VerifyPasswordArgon2id(storedHash, password);
+        }
+        else
+        {
+            authenticated = legacySha256Match || legacyPlaintextMatch;
+            needsMigration = authenticated;
+        }
+
+        if (!authenticated)
+        {
+            m_lastError = "Invalid account or password.";
+            return false;
+        }
+
+        outUserId = matchedUserId;
+
+        if (needsMigration)
+        {
+            std::string encodedHash;
+            if (!HashPasswordArgon2id(password, encodedHash))
+            {
+                m_lastError = "Failed to generate Argon2id hash.";
+                return false;
+            }
+
+            const std::string escapedArgonHash = Escape(encodedHash);
+            std::ostringstream migrateOss;
+            migrateOss << "UPDATE users SET password_hash='"
+                       << escapedArgonHash
+                       << "' WHERE user_id=" << outUserId;
+
+            if (!Execute(migrateOss.str()))
+                return false;
+        }
+
         m_lastError.clear();
         return true;
     }
@@ -206,13 +325,20 @@ namespace yuno::login
         }
 
         const std::string escapedUsername = Escape(username);
-        const std::string escapedPw = Escape(password);
+
+        std::string encodedHash;
+        if (!HashPasswordArgon2id(password, encodedHash))
+        {
+            m_lastError = "Failed to generate Argon2id hash.";
+            return false;
+        }
+        const std::string escapedHash = Escape(encodedHash);
 
         std::ostringstream oss;
         oss << "INSERT INTO users(username, password_hash, status, created_at) VALUES ('"
             << escapedUsername
             << "', '"
-            << escapedPw
+            << escapedHash
             << "', 1, NOW())";
 
         if (mysql_query(m_conn, oss.str().c_str()) != 0)
@@ -250,14 +376,14 @@ namespace yuno::login
         const std::uint64_t nowEpoch = static_cast<std::uint64_t>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
         outExpiresAtEpoch = nowEpoch + static_cast<std::uint64_t>(ttlSeconds);
 
-        const std::string escapedTokenHash = Escape(token);
+        const std::string escapedToken = Escape(token);
 
         std::ostringstream oss;
         oss << "INSERT INTO login_tokens(user_id, token_hash, ip_address, created_at, expires_at) VALUES ("
             << userId
-            << ", '"
-            << escapedTokenHash
-            << "', NULL, NOW(), FROM_UNIXTIME("
+            << ", SHA2('"
+            << escapedToken
+            << "', 256), NULL, NOW(), FROM_UNIXTIME("
             << outExpiresAtEpoch
             << ")) "
             << "ON DUPLICATE KEY UPDATE token_hash=VALUES(token_hash), ip_address=VALUES(ip_address), "
@@ -327,7 +453,8 @@ namespace yuno::login
         std::ostringstream oss;
         oss << "UPDATE login_tokens "
             << "SET revoked_at=NOW() "
-            << "WHERE token_hash='" << escapedToken << "' AND revoked_at IS NULL";
+            << "WHERE (token_hash=SHA2('" << escapedToken << "', 256) OR token_hash='" << escapedToken << "') "
+            << "AND revoked_at IS NULL";
 
         return Execute(oss.str());
     }

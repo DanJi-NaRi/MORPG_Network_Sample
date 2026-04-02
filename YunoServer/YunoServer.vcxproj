@@ -109,13 +109,21 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ServerNetwork;$(SolutionDir)vcpkg_installed\x64-windows\include;$(SolutionDir)YunoNetTransport\Public;$(SolutionDir)YunoNetTransport\Public\Net;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ServerNetwork;$(MYSQL_DIR)\include;C:\Other\MySQL\MySQL Server 8.4\include;$(SolutionDir)vcpkg_installed\x64-windows\include;$(SolutionDir)YunoNetTransport\Public;$(SolutionDir)YunoNetTransport\Public\Net;$(SolutionDir)YunoNetProtocol\Public;$(SolutionDir)YunoNetProtocol\Public\Net;$(SolutionDir)YunoGameProtocol\Public;$(SolutionDir)YunoGameProtocol\Public\Net;$(SolutionDir)YunoGameProtocol\Public\Net\MORPGPackets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(MYSQL_DIR)\lib;C:\Other\MySQL\MySQL Server 8.4\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libmysql.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>if exist "$(MYSQL_DIR)\lib\libmysql.dll" copy /Y "$(MYSQL_DIR)\lib\libmysql.dll" "$(OutDir)libmysql.dll"
+if not exist "$(OutDir)libmysql.dll" if exist "$(MYSQL_DIR)\bin\libmysql.dll" copy /Y "$(MYSQL_DIR)\bin\libmysql.dll" "$(OutDir)libmysql.dll"
+if not exist "$(OutDir)libmysql.dll" if exist "C:\Other\MySQL\MySQL Server 8.4\lib\libmysql.dll" copy /Y "C:\Other\MySQL\MySQL Server 8.4\lib\libmysql.dll" "$(OutDir)libmysql.dll"
+if not exist "$(OutDir)libmysql.dll" if exist "C:\Other\MySQL\MySQL Server 8.4\bin\libmysql.dll" copy /Y "C:\Other\MySQL\MySQL Server 8.4\bin\libmysql.dll" "$(OutDir)libmysql.dll"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -125,13 +133,21 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ServerNetwork;$(SolutionDir)vcpkg_installed\x64-windows\include;$(SolutionDir)YunoNetTransport\Public;$(SolutionDir)YunoNetTransport\Public\Net;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ServerNetwork;$(MYSQL_DIR)\include;C:\Other\MySQL\MySQL Server 8.4\include;$(SolutionDir)vcpkg_installed\x64-windows\include;$(SolutionDir)YunoNetTransport\Public;$(SolutionDir)YunoNetTransport\Public\Net;$(SolutionDir)YunoNetProtocol\Public;$(SolutionDir)YunoNetProtocol\Public\Net;$(SolutionDir)YunoGameProtocol\Public;$(SolutionDir)YunoGameProtocol\Public\Net;$(SolutionDir)YunoGameProtocol\Public\Net\MORPGPackets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(MYSQL_DIR)\lib;C:\Other\MySQL\MySQL Server 8.4\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libmysql.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>if exist "$(MYSQL_DIR)\lib\libmysql.dll" copy /Y "$(MYSQL_DIR)\lib\libmysql.dll" "$(OutDir)libmysql.dll"
+if not exist "$(OutDir)libmysql.dll" if exist "$(MYSQL_DIR)\bin\libmysql.dll" copy /Y "$(MYSQL_DIR)\bin\libmysql.dll" "$(OutDir)libmysql.dll"
+if not exist "$(OutDir)libmysql.dll" if exist "C:\Other\MySQL\MySQL Server 8.4\lib\libmysql.dll" copy /Y "C:\Other\MySQL\MySQL Server 8.4\lib\libmysql.dll" "$(OutDir)libmysql.dll"
+if not exist "$(OutDir)libmysql.dll" if exist "C:\Other\MySQL\MySQL Server 8.4\bin\libmysql.dll" copy /Y "C:\Other\MySQL\MySQL Server 8.4\bin\libmysql.dll" "$(OutDir)libmysql.dll"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main\main.cpp" />
@@ -145,10 +161,17 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="ServerNetwork\PlayerSpawnPointResolver.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\YunoNetTransport\YunoNetTransport.vcxproj">
       <Project>{3c413f28-750c-49a2-ae7c-cc0cabd4650e}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\YunoNetProtocol\YunoNetProtocol.vcxproj">
+      <Project>{69684c5f-323b-4bbf-8e8f-ee62bf0eca13}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\YunoGameProtocol\YunoGameProtocol.vcxproj">
+      <Project>{A5D1F4B2-7C55-4B4D-8A17-6B2D6E5B1A91}</Project>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="VcpkgOverrides">

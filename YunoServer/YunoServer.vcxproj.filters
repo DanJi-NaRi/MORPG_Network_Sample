@@ -20,5 +20,8 @@
     <ClInclude Include="ServerNetwork\YunoServerNetwork.h">
       <Filter>ServerNetwork</Filter>
     </ClInclude>
+    <ClInclude Include="ServerNetwork\PlayerSpawnPointResolver.h">
+      <Filter>ServerNetwork</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
