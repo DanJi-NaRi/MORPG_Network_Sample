@@ -169,6 +169,9 @@
       <Filter>Scenes\99.Test</Filter>
     </ClCompile>
     <ClCompile Include="Game\Object\Building.cpp" />
+    <ClCompile Include="Game\Object\Player.cpp">
+      <Filter>Game\Object</Filter>
+    </ClCompile>
     <ClCompile Include="Game\Object\Terrain.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -189,6 +192,12 @@
     </ClInclude>
     <ClInclude Include="utilityClass.h" />
     <ClInclude Include="Game\Object\Building.h" />
+    <ClInclude Include="Game\Object\Player.h">
+      <Filter>Game\Object</Filter>
+    </ClInclude>
     <ClInclude Include="Game\Object\Terrain.h" />
+    <ClInclude Include="Game\WorldPlayerState.h">
+      <Filter>Game</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -190,6 +190,7 @@ xcopy /y /d "$(SolutionDir)Assets\Sound\*.dll" "$(TargetDir)"</Command>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Game\Object\Building.cpp" />
+    <ClCompile Include="Game\Object\Player.cpp" />
     <ClCompile Include="Game\Object\Terrain.cpp" />
     <ClCompile Include="Scenes\TestScene.cpp" />
     <ClCompile Include="ClientNetwork\YunoClientNetwork.cpp">
@@ -212,7 +213,9 @@ xcopy /y /d "$(SolutionDir)Assets\Sound\*.dll" "$(TargetDir)"</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game\Object\Building.h" />
+    <ClInclude Include="Game\Object\Player.h" />
     <ClInclude Include="Game\Object\Terrain.h" />
+    <ClInclude Include="Game\WorldPlayerState.h" />
     <ClInclude Include="Scenes\TestScene.h" />
     <ClInclude Include="ClientNetwork\YunoClientNetwork.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>

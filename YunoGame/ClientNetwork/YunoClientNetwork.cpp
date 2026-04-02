@@ -5,6 +5,10 @@
 // ??욧탢嚥?野껊슣???온?귐뗫막椰꾧퀣??
 
 #include "PacketBuilder.h"
+#include "ByteIO.h"
+#include "PacketType.h"
+#include "S2C_WorldSnapshot.h"
+#include "WorldPlayerState.h"
 
 // ???땅??
 
@@ -135,6 +139,80 @@ namespace yuno::game
     // ------------------------------- ?紐껊굶 ??λ땾 ?源낆쨯 -------------------------------
     void YunoClientNetwork::RegisterMatchPacketHandler() 
     {
+        using namespace yuno::net;
+
+        Dispatcher().RegisterRaw(
+            PacketType::S2C_SpawnEntity,
+            [](const NetPeer&,
+               const PacketHeader&,
+               const std::uint8_t* body,
+               std::uint32_t bodyLen)
+            {
+                if (!body)
+                    return;
+
+                try
+                {
+                    ByteReader reader(body, bodyLen);
+                    const auto spawn = yuno::net::packets::S2C_SpawnEntity::Deserialize(reader);
+                    if (reader.Remaining() != 0)
+                        return;
+
+                    yuno::game::PublishLocalPlayerSpawn(
+                        spawn.entityId,
+                        spawn.archetypeId,
+                        spawn.x,
+                        spawn.y,
+                        spawn.z);
+
+                    std::cout << "[Client] spawn entityId=" << spawn.entityId
+                        << " archetypeId=" << spawn.archetypeId
+                        << " pos=(" << spawn.x << ", " << spawn.y << ", " << spawn.z << ")\n";
+                }
+                catch (...)
+                {
+                }
+            });
+
+        Dispatcher().RegisterRaw(
+            PacketType::S2C_WorldSnapshot,
+            [](const NetPeer&,
+               const PacketHeader&,
+               const std::uint8_t* body,
+               std::uint32_t bodyLen)
+            {
+                if (!body)
+                    return;
+
+                try
+                {
+                    ByteReader reader(body, bodyLen);
+                    const auto snapshot = yuno::net::packets::S2C_WorldSnapshot::Deserialize(reader);
+                    if (reader.Remaining() != 0)
+                        return;
+
+                    std::vector<yuno::game::WorldEntityState> worldEntities;
+                    worldEntities.reserve(snapshot.entities.size());
+                    for (const auto& pose : snapshot.entities)
+                    {
+                        yuno::game::WorldEntityState entity{};
+                        entity.entityId = pose.entityId;
+                        entity.x = pose.x;
+                        entity.y = pose.y;
+                        entity.z = pose.z;
+                        worldEntities.push_back(entity);
+                    }
+                    yuno::game::PublishWorldSnapshot(worldEntities);
+
+                    //std::cout << "[Client] snapshot tick=" << snapshot.serverTick
+                    //    << " snapshotId=" << snapshot.snapshotId
+                    //    << " entityCount=" << snapshot.entities.size() << "\n";
+                }
+                catch (...)
+                {
+                }
+            });
+
 //
 //        using namespace yuno::net;
 //

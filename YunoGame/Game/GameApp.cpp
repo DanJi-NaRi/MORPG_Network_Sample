@@ -22,16 +22,20 @@
 #include "GameApp.h"
 
 #include "PacketBuilder.h"
+#include "WorldPlayerState.h"
 #include "utilityClass.h"
 
 // 패킷
 
 #include "C2S_Ping.h"
+#include "C2S_EnterWorld.h"
+#include "C2S_MoveInput.h"
 //#include "C2S_MatchEnter.h"
 //#include "C2S_MatchLeave.h"
 
 namespace
 {
+    constexpr std::uint32_t kBlasterCharacterId = 1001;
 }
 
 
@@ -104,6 +108,28 @@ void GameApp::OnUpdate(float dt)
 {
     //m_gameManager->Tick(dt);
     m_clientNet.PumpIncoming(dt);
+
+    if (m_clientNet.IsConnected() && !m_enterWorldRequested)
+    {
+        using namespace yuno::net;
+
+        yuno::net::packets::C2S_EnterWorld enterWorld{};
+        enterWorld.characterId = kBlasterCharacterId;
+        enterWorld.spawnRegionId = 0;
+
+        auto bytes = PacketBuilder::Build(
+            PacketType::C2S_EnterWorld,
+            [&enterWorld](ByteWriter& w)
+            {
+                enterWorld.Serialize(w);
+            });
+
+        m_clientNet.SendPacket(std::move(bytes));
+        m_enterWorldRequested = true;
+
+        std::cout << "[GameApp] enter-world requested with Blaster characterId="
+            << kBlasterCharacterId << "\n";
+    }
 
     static float acc = 0.0f;
     static int frameCount = 0;
@@ -220,6 +246,49 @@ void GameApp::OnUpdate(float dt)
                 });
 
             m_clientNet.SendPacket(std::move(bytes));
+        }
+
+        std::uint32_t localEntityId = 0;
+        const bool hasLocalPlayer = yuno::game::TryGetLocalPlayerEntityId(localEntityId);
+        if (hasLocalPlayer)
+        {
+            std::int16_t moveX = 0;
+            std::int16_t moveY = 0;
+
+            if (input->IsKeyDown(VK_LEFT))
+                moveX -= 1;
+            if (input->IsKeyDown(VK_RIGHT))
+                moveX += 1;
+            if (input->IsKeyDown(VK_UP))
+                moveY += 1;
+            if (input->IsKeyDown(VK_DOWN))
+                moveY -= 1;
+
+            yuno::game::PublishLocalInputAxis(moveX, moveY);
+
+            yuno::net::packets::C2S_MoveInput moveInput{};
+            moveInput.entityId = localEntityId;
+
+            yuno::net::packets::MoveInputFrame frame{};
+            frame.clientTick = ++m_moveClientTick;
+            frame.sequence = ++m_moveSequence;
+            frame.moveX = moveX;
+            frame.moveY = moveY;
+            frame.buttons = 0;
+            moveInput.frames.push_back(frame);
+
+            auto moveBytes = yuno::net::PacketBuilder::Build(
+                yuno::net::PacketType::C2S_MoveInput,
+                [&moveInput](yuno::net::ByteWriter& w)
+                {
+                    moveInput.Serialize(w);
+                });
+
+            m_clientNet.SendPacket(std::move(moveBytes));
+        }
+        else
+        {
+            yuno::game::PublishLocalInputAxis(0, 0);
         }
 
     }
