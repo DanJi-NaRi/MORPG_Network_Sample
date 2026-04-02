@@ -1,8 +1,8 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "YunoEngine.h"
 
-// 인터페이스
+// ?명꽣?섏씠??
 #include "IGameApp.h"
 //#include "IWindow.h"
 //#include "IRenderer.h"
@@ -10,7 +10,7 @@
 //#include "IInput.h"
 //#include "ISceneManager.h"
 
-// 유노
+// ?좊끂
 #include "YunoWindow.h"
 #include "YunoRenderer.h"
 #include "YunoTimer.h"
@@ -18,12 +18,14 @@
 #include "YunoInputSystem.h"
 #include "YunoSceneManager.h"
 
- // 사운드!
+ // ?ъ슫??
 #include "AudioManagerPCH.h"
 
 #include "ImGuiManager.h"
 #include "UImgui.h"
+#include <mmsystem.h>
 
+#pragma comment(lib, "winmm.lib")
 
 #include "ImGUI_Debug.h"
 
@@ -33,6 +35,24 @@ IInput* YunoEngine::s_input = nullptr;
 IWindow* YunoEngine::s_window = nullptr;
 ISceneManager* YunoEngine::s_sceneManager = nullptr;
 IAudioManager* YunoEngine::s_audioManager = nullptr;
+
+namespace
+{
+    void DisableProcessPowerThrottling()
+    {
+#if defined(PROCESS_POWER_THROTTLING_CURRENT_VERSION)
+        PROCESS_POWER_THROTTLING_STATE state{};
+        state.Version = PROCESS_POWER_THROTTLING_CURRENT_VERSION;
+        state.ControlMask = PROCESS_POWER_THROTTLING_EXECUTION_SPEED;
+        state.StateMask = 0;
+        (void)SetProcessInformation(
+            GetCurrentProcess(),
+            ProcessPowerThrottling,
+            &state,
+            sizeof(state));
+#endif
+    }
+}
 
 YunoEngine::YunoEngine() = default;
 YunoEngine::~YunoEngine()
@@ -47,26 +67,30 @@ bool YunoEngine::Initialize(IGameApp* game, const wchar_t* title, uint32_t width
 
     m_game = game;
 
-    // 화면 생성
+    if (timeBeginPeriod(1) == TIMERR_NOERROR)
+        m_timerResolutionRaised = true;
+    DisableProcessPowerThrottling();
+
+    // ?붾㈃ ?앹꽦
     m_window = std::make_unique<YunoWindow>();          
     if (!m_window->Create(title, width, height))
         return false;
     s_window = m_window.get();
 
-    // 렌더러 생성
+    // ?뚮뜑???앹꽦
     m_renderer = std::make_unique<YunoRenderer>();      
     if (!m_renderer->Initialize(m_window.get()))
         return false;
     s_renderer = m_renderer.get();
 
-    // 씬 매니저 생성
+    // ??留ㅻ땲? ?앹꽦
     m_sceneManager = std::make_unique<YunoSceneManager>();
     s_sceneManager = m_sceneManager.get();
 
-    // 사운드!
-    // 사운드 매니저 초기화 
+    // ?ъ슫??
+    // ?ъ슫??留ㅻ땲? 珥덇린??
     AudioCore::Get().Init();
-    // 오디오 매니저 생성
+    // ?ㅻ뵒??留ㅻ땲? ?앹꽦
     m_audioManager = std::make_unique<AudioManager>();
     s_audioManager = m_audioManager.get();
 
@@ -78,20 +102,20 @@ bool YunoEngine::Initialize(IGameApp* game, const wchar_t* title, uint32_t width
     renderer->RegisterDrawUI();
 #endif
 
-    // 인풋 시스템 생성
+    // ?명뭼 ?쒖뒪???앹꽦
     m_input = std::make_unique<YunoInputSystem>();
     s_input = m_input.get();
 
-    // 텍스쳐 매니저 생성
+    // ?띿뒪爾?留ㅻ땲? ?앹꽦
     m_textureManager = std::make_unique<YunoTextureManager>(
         static_cast<YunoRenderer*>(m_renderer.get())
     );
     s_textureManager = m_textureManager.get();
 
-    // 타이머 생성
+    // ??대㉧ ?앹꽦
     m_timer = std::make_unique<YunoTimer>();            
     m_timer->Initialize();
-    //m_timer->SetMaxDeltaSeconds(0.1f); // 최대 프레임 제한
+    //m_timer->SetMaxDeltaSeconds(0.1f); // 理쒕? ?꾨젅???쒗븳
     m_timer->SetTimeScale(1.0f);
     m_fixedAccumulator = 0.0;
 
@@ -117,7 +141,7 @@ bool YunoEngine::Initialize(IGameApp* game, const wchar_t* title, uint32_t width
     );
 #endif
 
-    // Game 초기화
+    // Game 珥덇린??
     if (!m_game->OnInit())
         return false;
 
@@ -136,28 +160,28 @@ int YunoEngine::Run()
     {
         m_input->BeginFrame();
 
-        m_window->PollEvents(); // OS한테 메시지 전달
+        m_window->PollEvents(); // OS?쒗뀒 硫붿떆吏 ?꾨떖
 
-        if (m_window->ShouldClose())    // 종료
+        if (m_window->ShouldClose())    // 醫낅즺
         {
             m_running = false;
             break;
         }
 
         uint32_t w = 0, h = 0;
-        if (m_window->ConsumeResize(w, h))      // 화면 크기 변화 있으면? (더티 플래그 사용)
+        if (m_window->ConsumeResize(w, h))      // ?붾㈃ ?ш린 蹂???덉쑝硫? (?뷀떚 ?뚮옒洹??ъ슜)
         {
-            m_renderer->Resize(w, h);           // 렌더러 화면도 같이 변경 (스왑 체인, RTV, DSV)
+            m_renderer->Resize(w, h);           // ?뚮뜑???붾㈃??媛숈씠 蹂寃?(?ㅼ솑 泥댁씤, RTV, DSV)
         }
 
 
-        // ---------------------------------업데이트 시작 -----------------------------------------
+        // ---------------------------------?낅뜲?댄듃 ?쒖옉 -----------------------------------------
 
         constexpr double fixedDt = 1.0 / 60.0;   // 60Hz
         constexpr int maxFixedStepsPerFrame = 5; 
 
 
-        // dt 계산
+        // dt 怨꾩궛
         m_timer->Tick();
         const double frameDt = static_cast<double>(m_timer->UnscaledDeltaSeconds());
 
@@ -183,12 +207,12 @@ int YunoEngine::Run()
         m_game->OnUpdate(dt);
 
         m_input->Dispatch();
-        // 씬 업데이트 (씬 전환 ApplyPending 포함)
+        // ???낅뜲?댄듃 (???꾪솚 ApplyPending ?ы븿)
         m_sceneManager->Update(dt);
 
-        AudioCore::Get().Update(dt);  // 사운드!
+        AudioCore::Get().Update(dt);  // ?ъ슫??
 
-        // ---------------------------------드로우 시작 -----------------------------------------
+        // ---------------------------------?쒕줈???쒖옉 -----------------------------------------
 
         m_renderer->BeginFrame();
 
@@ -201,11 +225,11 @@ int YunoEngine::Run()
 #ifdef _DEBUG
 
 
-    //  UI 배치하는데 눈아파서 제거
-    //    // IMGUI 디버깅 스코프
+    //  UI 諛곗튂?섎뒗???덉븘?뚯꽌 ?쒓굅
+    //    // IMGUI ?붾쾭源??ㅼ퐫??
         ImGuiManager::BeginFrame();
     
-         //머지할때 이거 풀고 머지 ㄱㄱ
+         //癒몄??좊븣 ?닿굅 ?怨?癒몄? ?긱꽦
         //if (m_sceneManager->GetActiveScene()->GetUIManager()) {
         //    auto& map = m_sceneManager->GetActiveScene()->GetUIManager()->GetWidgetlist();
         //    for (const auto& kv : map) // kv: pair<const UINT, Widget*>
@@ -238,26 +262,26 @@ int YunoEngine::Run()
 
 void YunoEngine::Shutdown()
 {
-    // 종료 순서
+    // 醫낅즺 ?쒖꽌
 #ifdef _DEBUG
     ImGuiManager::Shutdown();
 #endif
 
-    // 1. 게임
+    // 1. 寃뚯엫
     if (m_game)
     {
         m_game->OnShutdown();
         m_game = nullptr;
     }
-    // 2. 씬매니저
+    // 2. ?щℓ?덉?
     s_sceneManager = nullptr;
     m_sceneManager.reset();
 
-    // 3. 텍스쳐 매니저
+    // 3. ?띿뒪爾?留ㅻ땲?
     s_textureManager = nullptr;
     m_textureManager.reset();
 
-    // 4. 렌더러
+    // 4. ?뚮뜑??
     if (m_renderer)
     {
         m_renderer->Shutdown();
@@ -265,16 +289,22 @@ void YunoEngine::Shutdown()
         m_renderer.reset();
     }
 
-    // 5. 타이머 
+    // 5. ??대㉧ 
     m_timer.reset();
 
-    // 6. 윈도우
+    // 6. ?덈룄??
     s_window = nullptr;
     m_window.reset();
 
-    // 7. 사운드 시스템
+    // 7. ?ъ슫???쒖뒪??
     AudioCore::Get().Shutdown();
 
     m_running = false;
+
+    if (m_timerResolutionRaised)
+    {
+        timeEndPeriod(1);
+        m_timerResolutionRaised = false;
+    }
 }
 

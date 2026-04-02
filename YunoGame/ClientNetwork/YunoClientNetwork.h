@@ -1,6 +1,8 @@
-#pragma once
+﻿#pragma once
 
+#include <atomic>
 #include <boost/asio.hpp>
+#include <cstdint>
 #include <functional>
 
 #include "TcpClient.h"          // YunoNetTransport
@@ -11,10 +13,17 @@ class GameManager;
 
 namespace yuno::game
 {
-    // 寃뚯엫 硫붿씤 <-> ?ㅽ듃?뚰겕 ?ㅻ젅???곌껐???섑띁
+    // 野껊슣??筌롫뗄??<-> ??쎈뱜??곌쾿 ??살쟿???怨뚭퍙????묐쓠
     class YunoClientNetwork final
     {
     public:
+        struct SnapshotAckDebugInfo
+        {
+            std::uint32_t lastReceivedSnapshotId = 0;
+            std::uint32_t lastSentAckSnapshotId = 0;
+            std::uint32_t lastServerSeenAckSnapshotId = 0;
+        };
+
         YunoClientNetwork();
         ~YunoClientNetwork();
 
@@ -26,18 +35,19 @@ namespace yuno::game
 
         bool IsConnected() const;
 
-        // ?쒕쾭?쒗뀒 諛쏆? ?⑦궥???붿뒪?⑥퀜濡??꾨떖
+        // ??뺤쒔??쀫?獄쏆룇? ???땅???遺용뮞??ν쒏에??袁⑤뼎
         void PumpIncoming(float dt);
 
-        // 硫붿씤 ?ㅻ젅?쒖뿉???몄텧: "?꾩꽦 ?⑦궥(?ㅻ뜑+諛붾뵒)" 諛붿씠?몃? ?≪떊 ?붿껌
+        // 筌롫뗄????살쟿??뽯퓠???紐꾪뀱: "?袁⑷쉐 ???땅(??삳쐭+獄쏅뗀逾?" 獄쏅뗄??紐? ??る뻿 ?遺욧퍕
         void SendPacket(std::vector<std::uint8_t> packetBytes);
+        SnapshotAckDebugInfo GetSnapshotAckDebugInfo() const;
 
-        // 寃뚯엫?먯꽌 ?몃뱾???깅줉?????덇쾶 dispatcher ?묎렐 ?쒓났
+        // 野껊슣??癒?퐣 ?紐껊굶???源낆쨯??????뉗쓺 dispatcher ?臾롫젏 ??볥궗
         yuno::net::PacketDispatcher& Dispatcher() { return m_dispatcher; }
         using RawPacketTapFn = std::function<void(const std::vector<std::uint8_t>& packetBytes)>;
         void SetRawPacketTap(RawPacketTapFn fn) { m_rawPacketTap = std::move(fn); }
 
-        // ?몃뱾???깅줉
+        // ?紐껊굶???源낆쨯
     public:
         void RegisterMatchPacketHandler();
 
@@ -54,10 +64,13 @@ namespace yuno::game
         yuno::net::TcpClient m_client;
 
         std::atomic<bool> m_running{ false };
+        std::atomic<std::uint32_t> m_lastReceivedSnapshotId{ 0 };
+        std::atomic<std::uint32_t> m_lastSentAckSnapshotId{ 0 };
+        std::atomic<std::uint32_t> m_lastServerSeenAckSnapshotId{ 0 };
 
         // --- Main thread processing ---
         yuno::net::PacketDispatcher m_dispatcher{ yuno::net::PacketDispatcher::EndpointRole::Client };
-        yuno::net::NetPeer m_serverPeer{}; // client???쒕쾭 peer瑜??섎굹濡?痍④툒 (sId=0?쇰줈 ?쒖옉)
+        yuno::net::NetPeer m_serverPeer{}; // client????뺤쒔 peer????롪돌嚥??띯몿??(sId=0??곗쨮 ??뽰삂)
 
         // --- Incoming queue (net thread -> main thread) ---
         std::mutex m_inMtx;

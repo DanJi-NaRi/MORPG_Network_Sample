@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <cstdint>
 #include <unordered_map>
@@ -39,7 +39,7 @@ private:
 private:
     static constexpr float kRemoteInterpolationRate = 10.0f;
     static constexpr float kLocalCorrectionRate = 9.0f;
-    static constexpr float kLocalPredictionSpeed = 2.25f;
+    static constexpr float kPlayerVisualYOffset = 1.0f;
 
     std::unordered_map<std::uint32_t, PlayerVisualRuntime> m_playerVisuals;
 };

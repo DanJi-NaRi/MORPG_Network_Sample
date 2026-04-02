@@ -148,11 +148,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="GameProtocolPCH\pch.h" />
+    <ClInclude Include="Public\Net\MORPGPackets\C2S_AckSnapshot.h" />
     <ClInclude Include="Public\Net\MORPGPackets\C2S_EnterWorld.h" />
     <ClInclude Include="Public\Net\MORPGPackets\C2S_MoveInput.h" />
     <ClInclude Include="Public\Net\MORPGPackets\S2C_WorldSnapshot.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Private\Net\MORPGPackets\C2S_AckSnapshot.cpp" />
     <ClCompile Include="Private\Net\MORPGPackets\C2S_EnterWorld.cpp" />
     <ClCompile Include="Private\Net\MORPGPackets\C2S_MoveInput.cpp" />
     <ClCompile Include="Private\Net\MORPGPackets\S2C_WorldSnapshot.cpp" />

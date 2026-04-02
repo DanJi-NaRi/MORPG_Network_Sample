@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "TestScene.h"
 
@@ -56,7 +56,7 @@ void TestScene::Update(float dt)
             PlayerVisualRuntime* runtime = EnsurePlayerVisual(entity.entityId, entity.x, entity.y, entity.z);
             if (runtime && runtime->visual)
             {
-                runtime->targetPos = XMFLOAT3(entity.x, entity.y, entity.z);
+                runtime->targetPos = XMFLOAT3(entity.x, entity.y + kPlayerVisualYOffset, entity.z);
                 runtime->isLocal = hasLocalEntity && (entity.entityId == localEntityId);
 
                 if (!runtime->initialized)
@@ -94,10 +94,6 @@ void TestScene::Update(float dt)
         }
     }
 
-    std::int16_t localMoveX = 0;
-    std::int16_t localMoveY = 0;
-    yuno::game::GetLocalInputAxis(localMoveX, localMoveY);
-
     for (auto& kv : m_playerVisuals)
     {
         PlayerVisualRuntime& runtime = kv.second;
@@ -106,17 +102,12 @@ void TestScene::Update(float dt)
 
         if (runtime.isLocal)
         {
-            float inputX = static_cast<float>(localMoveX);
-            float inputZ = static_cast<float>(localMoveY);
-            const float inputLenSq = inputX * inputX + inputZ * inputZ;
-            if (inputLenSq > 0.0f)
+            float predictedX = runtime.targetPos.x;
+            float predictedY = runtime.targetPos.y - kPlayerVisualYOffset;
+            float predictedZ = runtime.targetPos.z;
+            if (yuno::game::TryGetReconciledLocalPosition(predictedX, predictedY, predictedZ))
             {
-                const float invLen = 1.0f / std::sqrt(inputLenSq);
-                inputX *= invLen;
-                inputZ *= invLen;
-
-                runtime.renderPos.x += inputX * kLocalPredictionSpeed * dt;
-                runtime.renderPos.z += inputZ * kLocalPredictionSpeed * dt;
+                runtime.targetPos = XMFLOAT3(predictedX, predictedY + kPlayerVisualYOffset, predictedZ);
             }
 
             const float alpha = std::min(1.0f, kLocalCorrectionRate * dt);
@@ -126,10 +117,26 @@ void TestScene::Update(float dt)
         }
         else
         {
-            const float alpha = std::min(1.0f, kRemoteInterpolationRate * dt);
-            runtime.renderPos.x += (runtime.targetPos.x - runtime.renderPos.x) * alpha;
-            runtime.renderPos.y += (runtime.targetPos.y - runtime.renderPos.y) * alpha;
-            runtime.renderPos.z += (runtime.targetPos.z - runtime.renderPos.z) * alpha;
+            float sampledX = 0.0f;
+            float sampledY = 0.0f;
+            float sampledZ = 0.0f;
+            if (yuno::game::TrySampleRemoteInterpolatedPosition(
+                kv.first,
+                yuno::game::kRemoteInterpolationDelaySeconds,
+                sampledX,
+                sampledY,
+                sampledZ))
+            {
+                runtime.renderPos = XMFLOAT3(sampledX, sampledY + kPlayerVisualYOffset, sampledZ);
+                runtime.targetPos = runtime.renderPos;
+            }
+            else
+            {
+                const float alpha = std::min(1.0f, kRemoteInterpolationRate * dt);
+                runtime.renderPos.x += (runtime.targetPos.x - runtime.renderPos.x) * alpha;
+                runtime.renderPos.y += (runtime.targetPos.y - runtime.renderPos.y) * alpha;
+                runtime.renderPos.z += (runtime.targetPos.z - runtime.renderPos.z) * alpha;
+            }
         }
 
         runtime.visual->SetPos(runtime.renderPos);
@@ -160,9 +167,10 @@ TestScene::PlayerVisualRuntime* TestScene::EnsurePlayerVisual(std::uint32_t enti
     }
 
     const std::wstring name = L"Player_" + std::to_wstring(entityId);
+    const float liftedY = y + kPlayerVisualYOffset;
     Player* created = m_objectManager->CreateObjectFromFile<Player>(
         name,
-        XMFLOAT3(x, y, z),
+        XMFLOAT3(x, liftedY, z),
         L"../Assets/fbx/weapon/Blaster/Blaster.fbx");
 
     if (created)
@@ -170,8 +178,8 @@ TestScene::PlayerVisualRuntime* TestScene::EnsurePlayerVisual(std::uint32_t enti
         created->SetScale(XMFLOAT3(3.0f, 3.0f, 3.0f));
         PlayerVisualRuntime runtime{};
         runtime.visual = created;
-        runtime.renderPos = XMFLOAT3(x, y, z);
-        runtime.targetPos = XMFLOAT3(x, y, z);
+        runtime.renderPos = XMFLOAT3(x, liftedY, z);
+        runtime.targetPos = XMFLOAT3(x, liftedY, z);
         runtime.initialized = true;
         m_playerVisuals.emplace(entityId, runtime);
         return &m_playerVisuals.find(entityId)->second;

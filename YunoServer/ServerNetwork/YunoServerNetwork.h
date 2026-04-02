@@ -3,6 +3,7 @@
 #include <chrono>
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -13,6 +14,8 @@ namespace yuno::net
 {
     class TcpSession;
 }
+
+struct MYSQL;
 
 namespace yuno::server
 {
@@ -39,30 +42,40 @@ namespace yuno::server
 
     private:
         static constexpr std::uint32_t kBlasterArchetypeId = 1001;
-        static constexpr float kMoveSpeedUnitsPerSec = 2.25f;
+        static constexpr float kMoveSpeedUnitsPerSec = 10.0f;
         static constexpr float kSnapshotIntervalSec = 0.05f;
+        static constexpr float kInputStepSeconds = 1.0f / 30.0f;
 
         struct PlayerRuntimeState
         {
             std::uint64_t sessionId = 0;
+            std::uint64_t userId = 0;
             std::uint32_t entityId = 0;
             std::uint32_t archetypeId = kBlasterArchetypeId;
             bool inWorld = false;
-            std::int16_t inputMoveX = 0;
-            std::int16_t inputMoveY = 0;
+            std::uint32_t lastAckedSnapshotId = 0;
+            std::uint32_t lastProcessedInputSequence = 0;
             float x = 0.0f;
             float y = 0.0f;
             float z = 0.0f;
+            std::string loginToken;
         };
 
         void HandleEnterWorld(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
         void HandleMoveInput(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
+        void HandleAckSnapshot(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
         void SendSpawnEntity(std::shared_ptr<yuno::net::TcpSession> session, const PlayerRuntimeState& player) const;
         void BroadcastWorldSnapshot();
+        bool ConnectAuthDbFromEnv();
+        void DisconnectAuthDb();
+        bool ValidateLoginToken(const std::string& token, std::uint64_t& outUserId);
+        bool RevokeLoginTokenByHash(const std::string& token);
+        std::string EscapeSql(const std::string& input);
 
         boost::asio::io_context m_io;
         yuno::net::TcpServer m_server;
         PlayerSpawnPointResolver m_spawnPointResolver;
+        MYSQL* m_authDb = nullptr;
 
         std::unordered_map<std::uint64_t, PlayerRuntimeState> m_players;
         std::uint32_t m_nextEntityId = 1;

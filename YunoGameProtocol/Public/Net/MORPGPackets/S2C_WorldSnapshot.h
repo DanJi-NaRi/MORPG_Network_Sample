@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <cstdint>
 #include <vector>
@@ -15,6 +15,7 @@ namespace yuno::net::packets
     {
         std::uint32_t entityId = 0;
         std::uint32_t stateFlags = 0;
+        std::uint32_t lastProcessedInputSequence = 0;
         float x = 0.0f;
         float y = 0.0f;
         float z = 0.0f;
