@@ -497,9 +497,10 @@ namespace yuno::server
 
         const std::string escaped = EscapeSql(token);
         std::ostringstream oss;
-        oss << "SELECT lt.user_id FROM login_tokens lt "
+        oss << "SELECT lt.user_id, (lt.token_hash='" << escaped << "') AS legacy_plaintext_match "
+            << "FROM login_tokens lt "
             << "INNER JOIN users u ON u.user_id = lt.user_id "
-            << "WHERE lt.token_hash='" << escaped << "' "
+            << "WHERE (lt.token_hash=SHA2('" << escaped << "', 256) OR lt.token_hash='" << escaped << "') "
             << "AND lt.revoked_at IS NULL "
             << "AND lt.expires_at > NOW() "
             << "AND u.status=1 "
@@ -516,10 +517,30 @@ namespace yuno::server
             return false;
 
         MYSQL_ROW row = mysql_fetch_row(result);
+        bool legacyPlaintextMatch = false;
         if (row && row[0])
+        {
             outUserId = static_cast<std::uint64_t>(std::strtoull(row[0], nullptr, 10));
+            legacyPlaintextMatch = (row[1] != nullptr && std::strtoul(row[1], nullptr, 10) != 0UL);
+        }
 
         mysql_free_result(result);
+
+        if (outUserId != 0 && legacyPlaintextMatch)
+        {
+            std::ostringstream migrateOss;
+            migrateOss << "UPDATE login_tokens SET token_hash=SHA2('"
+                       << escaped
+                       << "', 256) "
+                       << "WHERE user_id=" << outUserId
+                       << " AND token_hash='" << escaped << "'";
+
+            if (mysql_query(m_authDb, migrateOss.str().c_str()) != 0)
+            {
+                std::cerr << "[Server] token hash migrate failed: " << mysql_error(m_authDb) << "\n";
+            }
+        }
+
         return outUserId != 0;
     }
 
@@ -531,7 +552,8 @@ namespace yuno::server
         const std::string escaped = EscapeSql(token);
         std::ostringstream oss;
         oss << "UPDATE login_tokens SET revoked_at=NOW() "
-            << "WHERE token_hash='" << escaped << "' AND revoked_at IS NULL";
+            << "WHERE (token_hash=SHA2('" << escaped << "', 256) OR token_hash='" << escaped << "') "
+            << "AND revoked_at IS NULL";
 
         if (mysql_query(m_authDb, oss.str().c_str()) != 0)
         {

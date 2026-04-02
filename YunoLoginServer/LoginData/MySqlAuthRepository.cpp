@@ -162,11 +162,17 @@ namespace yuno::login
         const std::string escapedPw = Escape(password);
 
         std::ostringstream oss;
-        oss << "SELECT user_id FROM users WHERE username='"
-            << escapedUsername
-            << "' AND password_hash='"
+        oss << "SELECT user_id, (password_hash='"
             << escapedPw
-            << "' AND status=1 LIMIT 1";
+            << "') AS legacy_plaintext_match "
+            << "FROM users WHERE username='"
+            << escapedUsername
+            << "' AND status=1 "
+            << "AND (password_hash=SHA2('"
+            << escapedPw
+            << "', 256) OR password_hash='"
+            << escapedPw
+            << "') LIMIT 1";
 
         if (mysql_query(m_conn, oss.str().c_str()) != 0)
         {
@@ -190,7 +196,20 @@ namespace yuno::login
         }
 
         outUserId = static_cast<std::uint64_t>(std::strtoull(row[0], nullptr, 10));
+        const bool legacyPlaintextMatch = (row[1] != nullptr && std::strtoul(row[1], nullptr, 10) != 0UL);
         mysql_free_result(result);
+
+        if (legacyPlaintextMatch)
+        {
+            std::ostringstream migrateOss;
+            migrateOss << "UPDATE users SET password_hash=SHA2('"
+                       << escapedPw
+                       << "', 256) WHERE user_id="
+                       << outUserId;
+
+            (void)Execute(migrateOss.str());
+        }
+
         m_lastError.clear();
         return true;
     }
@@ -211,9 +230,9 @@ namespace yuno::login
         std::ostringstream oss;
         oss << "INSERT INTO users(username, password_hash, status, created_at) VALUES ('"
             << escapedUsername
-            << "', '"
+            << "', SHA2('"
             << escapedPw
-            << "', 1, NOW())";
+            << "', 256), 1, NOW())";
 
         if (mysql_query(m_conn, oss.str().c_str()) != 0)
         {
@@ -250,14 +269,14 @@ namespace yuno::login
         const std::uint64_t nowEpoch = static_cast<std::uint64_t>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
         outExpiresAtEpoch = nowEpoch + static_cast<std::uint64_t>(ttlSeconds);
 
-        const std::string escapedTokenHash = Escape(token);
+        const std::string escapedToken = Escape(token);
 
         std::ostringstream oss;
         oss << "INSERT INTO login_tokens(user_id, token_hash, ip_address, created_at, expires_at) VALUES ("
             << userId
-            << ", '"
-            << escapedTokenHash
-            << "', NULL, NOW(), FROM_UNIXTIME("
+            << ", SHA2('"
+            << escapedToken
+            << "', 256), NULL, NOW(), FROM_UNIXTIME("
             << outExpiresAtEpoch
             << ")) "
             << "ON DUPLICATE KEY UPDATE token_hash=VALUES(token_hash), ip_address=VALUES(ip_address), "
@@ -327,7 +346,8 @@ namespace yuno::login
         std::ostringstream oss;
         oss << "UPDATE login_tokens "
             << "SET revoked_at=NOW() "
-            << "WHERE token_hash='" << escapedToken << "' AND revoked_at IS NULL";
+            << "WHERE (token_hash=SHA2('" << escapedToken << "', 256) OR token_hash='" << escapedToken << "') "
+            << "AND revoked_at IS NULL";
 
         return Execute(oss.str());
     }
