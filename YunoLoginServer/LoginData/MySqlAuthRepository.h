@@ -40,6 +40,7 @@ namespace yuno::login
 
         std::string Escape(const std::string& input);
         bool Execute(const std::string& sql);
+        void DrainResults();
 
     private:
         MYSQL* m_conn = nullptr;

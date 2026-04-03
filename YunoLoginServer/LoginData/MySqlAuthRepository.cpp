@@ -212,11 +212,32 @@ namespace yuno::login
         if (mysql_query(m_conn, sql.c_str()) != 0)
         {
             m_lastError = mysql_error(m_conn);
+            DrainResults();
             return false;
         }
 
+        DrainResults();
         m_lastError.clear();
         return true;
+    }
+
+    void MySqlAuthRepository::DrainResults()
+    {
+        if (!m_conn)
+            return;
+
+        while (true)
+        {
+            MYSQL_RES* result = mysql_store_result(m_conn);
+            if (result)
+            {
+                mysql_free_result(result);
+            }
+
+            const int next = mysql_next_result(m_conn);
+            if (next != 0)
+                break;
+        }
     }
 
     bool MySqlAuthRepository::ValidateUserCredentials(
@@ -236,16 +257,16 @@ namespace yuno::login
         const std::string escapedPw = Escape(password);
 
         std::ostringstream oss;
-        oss << "SELECT user_id, password_hash, "
-            << "(password_hash=SHA2('" << escapedPw << "', 256)) AS legacy_sha256_match, "
-            << "(password_hash='" << escapedPw << "') AS legacy_plaintext_match "
-            << "FROM users WHERE username='"
+        oss << "CALL sp_auth_validate_user_credentials('"
             << escapedUsername
-            << "' AND status=1 LIMIT 1";
+            << "', '"
+            << escapedPw
+            << "')";
 
         if (mysql_query(m_conn, oss.str().c_str()) != 0)
         {
             m_lastError = mysql_error(m_conn);
+            DrainResults();
             return false;
         }
 
@@ -253,6 +274,7 @@ namespace yuno::login
         if (!result)
         {
             m_lastError = mysql_error(m_conn);
+            DrainResults();
             return false;
         }
 
@@ -260,6 +282,7 @@ namespace yuno::login
         if (!row || !row[0] || !row[1])
         {
             mysql_free_result(result);
+            DrainResults();
             m_lastError = "Invalid account or password.";
             return false;
         }
@@ -269,6 +292,7 @@ namespace yuno::login
         const bool legacySha256Match = (row[2] != nullptr && std::strtoul(row[2], nullptr, 10) != 0UL);
         const bool legacyPlaintextMatch = (row[3] != nullptr && std::strtoul(row[3], nullptr, 10) != 0UL);
         mysql_free_result(result);
+        DrainResults();
 
         bool authenticated = false;
         bool needsMigration = false;
@@ -302,9 +326,11 @@ namespace yuno::login
 
             const std::string escapedArgonHash = Escape(encodedHash);
             std::ostringstream migrateOss;
-            migrateOss << "UPDATE users SET password_hash='"
+            migrateOss << "CALL sp_auth_migrate_user_password("
+                       << outUserId
+                       << ", '"
                        << escapedArgonHash
-                       << "' WHERE user_id=" << outUserId;
+                       << "')";
 
             if (!Execute(migrateOss.str()))
                 return false;
@@ -335,11 +361,11 @@ namespace yuno::login
         const std::string escapedHash = Escape(encodedHash);
 
         std::ostringstream oss;
-        oss << "INSERT INTO users(username, password_hash, status, created_at) VALUES ('"
+        oss << "CALL sp_auth_create_user('"
             << escapedUsername
             << "', '"
             << escapedHash
-            << "', 1, NOW())";
+            << "')";
 
         if (mysql_query(m_conn, oss.str().c_str()) != 0)
         {
@@ -352,9 +378,11 @@ namespace yuno::login
             }
 
             m_lastError = mysql_error(m_conn);
+            DrainResults();
             return false;
         }
 
+        DrainResults();
         m_lastError.clear();
         return true;
     }
@@ -379,15 +407,13 @@ namespace yuno::login
         const std::string escapedToken = Escape(token);
 
         std::ostringstream oss;
-        oss << "INSERT INTO login_tokens(user_id, token_hash, ip_address, created_at, expires_at) VALUES ("
+        oss << "CALL sp_auth_upsert_login_token("
             << userId
-            << ", SHA2('"
+            << ", '"
             << escapedToken
-            << "', 256), NULL, NOW(), FROM_UNIXTIME("
+            << "', "
             << outExpiresAtEpoch
-            << ")) "
-            << "ON DUPLICATE KEY UPDATE token_hash=VALUES(token_hash), ip_address=VALUES(ip_address), "
-            << "expires_at=VALUES(expires_at), created_at=VALUES(created_at), revoked_at=NULL";
+            << ")";
 
         return Execute(oss.str());
     }
@@ -395,7 +421,7 @@ namespace yuno::login
     bool MySqlAuthRepository::TouchLastLogin(std::uint64_t userId)
     {
         std::ostringstream oss;
-        oss << "UPDATE users SET last_login_at=NOW() WHERE user_id=" << userId;
+        oss << "CALL sp_auth_touch_last_login(" << userId << ")";
         return Execute(oss.str());
     }
 
@@ -410,15 +436,12 @@ namespace yuno::login
         }
 
         std::ostringstream oss;
-        oss << "SELECT token_id FROM login_tokens "
-            << "WHERE user_id=" << userId
-            << " AND revoked_at IS NULL "
-            << "AND expires_at > NOW() "
-            << "LIMIT 1";
+        oss << "CALL sp_auth_has_active_login_token(" << userId << ")";
 
         if (mysql_query(m_conn, oss.str().c_str()) != 0)
         {
             m_lastError = mysql_error(m_conn);
+            DrainResults();
             return false;
         }
 
@@ -426,12 +449,14 @@ namespace yuno::login
         if (!result)
         {
             m_lastError = mysql_error(m_conn);
+            DrainResults();
             return false;
         }
 
         MYSQL_ROW row = mysql_fetch_row(result);
         outHasActiveToken = (row != nullptr && row[0] != nullptr);
         mysql_free_result(result);
+        DrainResults();
 
         m_lastError.clear();
         return true;
@@ -440,9 +465,7 @@ namespace yuno::login
     bool MySqlAuthRepository::RevokeLoginToken(std::uint64_t userId)
     {
         std::ostringstream oss;
-        oss << "UPDATE login_tokens "
-            << "SET revoked_at=NOW() "
-            << "WHERE user_id=" << userId << " AND revoked_at IS NULL";
+        oss << "CALL sp_auth_revoke_login_token(" << userId << ")";
         return Execute(oss.str());
     }
 
@@ -451,10 +474,9 @@ namespace yuno::login
         const std::string escapedToken = Escape(tokenHash);
 
         std::ostringstream oss;
-        oss << "UPDATE login_tokens "
-            << "SET revoked_at=NOW() "
-            << "WHERE (token_hash=SHA2('" << escapedToken << "', 256) OR token_hash='" << escapedToken << "') "
-            << "AND revoked_at IS NULL";
+        oss << "CALL sp_auth_revoke_login_token_by_hash('"
+            << escapedToken
+            << "')";
 
         return Execute(oss.str());
     }

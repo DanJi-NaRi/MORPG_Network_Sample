@@ -15,8 +15,8 @@ namespace yuno::net::packets
     {
         std::uint32_t clientTick = 0;
         std::uint32_t sequence = 0;
-        std::int16_t moveX = 0;
-        std::int16_t moveY = 0;
+        float moveX = 0.0f;
+        float moveY = 0.0f;
         std::uint16_t buttons = 0;
 
         void Serialize(ByteWriter& w) const;

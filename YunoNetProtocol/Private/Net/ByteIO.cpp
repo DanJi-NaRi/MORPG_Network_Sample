@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "ByteIO.h"
+#include <cstring>
 
 namespace yuno::net
 {
@@ -25,6 +26,14 @@ namespace yuno::net
             | (static_cast<std::uint32_t>(p[3]) << 24);
     }
 
+    float ReadF32LE(const std::uint8_t* p)
+    {
+        const std::uint32_t bits = ReadU32LE(p);
+        float v = 0.0f;
+        std::memcpy(&v, &bits, sizeof(float));
+        return v;
+    }
+
     void WriteU8(std::uint8_t* p, std::uint8_t v)
     {
         p[0] = v;
@@ -42,6 +51,13 @@ namespace yuno::net
         p[1] = static_cast<std::uint8_t>((v >> 8) & 0xFFu);
         p[2] = static_cast<std::uint8_t>((v >> 16) & 0xFFu);
         p[3] = static_cast<std::uint8_t>((v >> 24) & 0xFFu);
+    }
+
+    void WriteF32LE(std::uint8_t* p, float v)
+    {
+        std::uint32_t bits = 0;
+        std::memcpy(&bits, &v, sizeof(float));
+        WriteU32LE(p, bits);
     }
 
     // =========================
@@ -79,6 +95,14 @@ namespace yuno::net
         return v;
     }
 
+    float ByteReader::ReadF32LE()
+    {
+        if (!Has(4)) throw std::runtime_error("ByteReader overflow (F32)");
+        const float v = yuno::net::ReadF32LE(m_cur);
+        m_cur += 4;
+        return v;
+    }
+
     // =========================
     // Pointer 기반 바이트 Writer
     // =========================
@@ -104,5 +128,12 @@ namespace yuno::net
         m_out.push_back(static_cast<std::uint8_t>((v >> 8) & 0xFFu));
         m_out.push_back(static_cast<std::uint8_t>((v >> 16) & 0xFFu));
         m_out.push_back(static_cast<std::uint8_t>((v >> 24) & 0xFFu));
+    }
+
+    void ByteWriter::WriteF32LE(float v)
+    {
+        std::uint32_t bits = 0;
+        std::memcpy(&bits, &v, sizeof(float));
+        WriteU32LE(bits);
     }
 }
