@@ -56,6 +56,25 @@ namespace yuno::server
 
             return static_cast<unsigned int>(parsed);
         }
+
+        void DrainMySqlResults(MYSQL* conn)
+        {
+            if (!conn)
+                return;
+
+            while (true)
+            {
+                MYSQL_RES* result = mysql_store_result(conn);
+                if (result)
+                {
+                    mysql_free_result(result);
+                }
+
+                const int next = mysql_next_result(conn);
+                if (next != 0)
+                    break;
+            }
+        }
     }
 
     YunoServerNetwork::YunoServerNetwork()
@@ -306,18 +325,8 @@ namespace yuno::server
             if (frame.sequence <= player.lastProcessedInputSequence)
                 continue;
 
-            float inputX = 0.0f;
-            float inputZ = 0.0f;
-
-            if (frame.moveX > 0)
-                inputX = 1.0f;
-            else if (frame.moveX < 0)
-                inputX = -1.0f;
-
-            if (frame.moveY > 0)
-                inputZ = 1.0f;
-            else if (frame.moveY < 0)
-                inputZ = -1.0f;
+            float inputX = std::clamp(frame.moveX, -1.0f, 1.0f);
+            float inputZ = std::clamp(frame.moveY, -1.0f, 1.0f);
 
             const float inputLenSq = inputX * inputX + inputZ * inputZ;
             if (inputLenSq > 0.0f)
@@ -497,24 +506,21 @@ namespace yuno::server
 
         const std::string escaped = EscapeSql(token);
         std::ostringstream oss;
-        oss << "SELECT lt.user_id, (lt.token_hash='" << escaped << "') AS legacy_plaintext_match "
-            << "FROM login_tokens lt "
-            << "INNER JOIN users u ON u.user_id = lt.user_id "
-            << "WHERE (lt.token_hash=SHA2('" << escaped << "', 256) OR lt.token_hash='" << escaped << "') "
-            << "AND lt.revoked_at IS NULL "
-            << "AND lt.expires_at > NOW() "
-            << "AND u.status=1 "
-            << "LIMIT 1";
+        oss << "CALL sp_auth_validate_login_token('" << escaped << "')";
 
         if (mysql_query(m_authDb, oss.str().c_str()) != 0)
         {
             std::cerr << "[Server] validate token query failed: " << mysql_error(m_authDb) << "\n";
+            DrainMySqlResults(m_authDb);
             return false;
         }
 
         MYSQL_RES* result = mysql_store_result(m_authDb);
         if (!result)
+        {
+            DrainMySqlResults(m_authDb);
             return false;
+        }
 
         MYSQL_ROW row = mysql_fetch_row(result);
         bool legacyPlaintextMatch = false;
@@ -525,20 +531,22 @@ namespace yuno::server
         }
 
         mysql_free_result(result);
+        DrainMySqlResults(m_authDb);
 
         if (outUserId != 0 && legacyPlaintextMatch)
         {
             std::ostringstream migrateOss;
-            migrateOss << "UPDATE login_tokens SET token_hash=SHA2('"
+            migrateOss << "CALL sp_auth_migrate_login_token_hash("
+                       << outUserId
+                       << ", '"
                        << escaped
-                       << "', 256) "
-                       << "WHERE user_id=" << outUserId
-                       << " AND token_hash='" << escaped << "'";
+                       << "')";
 
             if (mysql_query(m_authDb, migrateOss.str().c_str()) != 0)
             {
                 std::cerr << "[Server] token hash migrate failed: " << mysql_error(m_authDb) << "\n";
             }
+            DrainMySqlResults(m_authDb);
         }
 
         return outUserId != 0;
@@ -551,15 +559,16 @@ namespace yuno::server
 
         const std::string escaped = EscapeSql(token);
         std::ostringstream oss;
-        oss << "UPDATE login_tokens SET revoked_at=NOW() "
-            << "WHERE (token_hash=SHA2('" << escaped << "', 256) OR token_hash='" << escaped << "') "
-            << "AND revoked_at IS NULL";
+        oss << "CALL sp_auth_revoke_login_token_by_hash('" << escaped << "')";
 
         if (mysql_query(m_authDb, oss.str().c_str()) != 0)
         {
             std::cerr << "[Server] revoke token query failed: " << mysql_error(m_authDb) << "\n";
+            DrainMySqlResults(m_authDb);
             return false;
         }
+
+        DrainMySqlResults(m_authDb);
 
         return true;
     }

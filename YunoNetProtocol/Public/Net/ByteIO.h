@@ -13,10 +13,12 @@ namespace yuno::net
     std::uint8_t  ReadU8    (const std::uint8_t* p);
     std::uint16_t ReadU16LE (const std::uint8_t* p);
     std::uint32_t ReadU32LE (const std::uint8_t* p);
+    float ReadF32LE(const std::uint8_t* p);
 
     void WriteU8(std::uint8_t* p, std::uint8_t v);
     void WriteU16LE(std::uint8_t* p, std::uint16_t v);
     void WriteU32LE(std::uint8_t* p, std::uint32_t v);
+    void WriteF32LE(std::uint8_t* p, float v);
 
     // =========================
     // Pointer 기반 바이트 Reader
@@ -31,6 +33,7 @@ namespace yuno::net
         std::uint8_t  ReadU8();
         std::uint16_t ReadU16LE();
         std::uint32_t ReadU32LE();
+        float ReadF32LE();
 
         const std::uint8_t* Current() const { return m_cur; }
         std::size_t Remaining() const { return m_end - m_cur; }
@@ -51,6 +54,7 @@ namespace yuno::net
         void WriteU8(std::uint8_t v);
         void WriteU16LE(std::uint16_t v);
         void WriteU32LE(std::uint32_t v);
+        void WriteF32LE(float v);
 
     private:
         std::vector<std::uint8_t>& m_out;

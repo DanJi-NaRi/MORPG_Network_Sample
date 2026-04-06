@@ -16,8 +16,8 @@ namespace yuno::net::packets
     {
         w.WriteU32LE(clientTick);
         w.WriteU32LE(sequence);
-        w.WriteU16LE(static_cast<std::uint16_t>(moveX));
-        w.WriteU16LE(static_cast<std::uint16_t>(moveY));
+        w.WriteF32LE(moveX);
+        w.WriteF32LE(moveY);
         w.WriteU16LE(buttons);
     }
 
@@ -26,8 +26,8 @@ namespace yuno::net::packets
         MoveInputFrame frame{};
         frame.clientTick = r.ReadU32LE();
         frame.sequence = r.ReadU32LE();
-        frame.moveX = static_cast<std::int16_t>(r.ReadU16LE());
-        frame.moveY = static_cast<std::int16_t>(r.ReadU16LE());
+        frame.moveX = r.ReadF32LE();
+        frame.moveY = r.ReadF32LE();
         frame.buttons = r.ReadU16LE();
         return frame;
     }

@@ -25,8 +25,8 @@ namespace yuno::game
     struct PendingLocalInput
     {
         std::uint32_t sequence = 0;
-        std::int16_t moveX = 0;
-        std::int16_t moveY = 0;
+        float moveX = 0.0f;
+        float moveY = 0.0f;
     };
 
     struct SharedWorldState
@@ -103,7 +103,7 @@ namespace yuno::game
         g_worldState.snapshotDirty = true;
     }
 
-    inline void PublishLocalInput(std::uint32_t sequence, std::int16_t moveX, std::int16_t moveY)
+    inline void PublishLocalInput(std::uint32_t sequence, float moveX, float moveY)
     {
         std::lock_guard<std::mutex> lock(g_worldStateMutex);
         PendingLocalInput input{};
@@ -216,18 +216,8 @@ namespace yuno::game
 
         for (const auto& input : g_worldState.pendingLocalInputs)
         {
-            float inputX = 0.0f;
-            float inputZ = 0.0f;
-
-            if (input.moveX > 0)
-                inputX = 1.0f;
-            else if (input.moveX < 0)
-                inputX = -1.0f;
-
-            if (input.moveY > 0)
-                inputZ = 1.0f;
-            else if (input.moveY < 0)
-                inputZ = -1.0f;
+            float inputX = std::clamp(input.moveX, -1.0f, 1.0f);
+            float inputZ = std::clamp(input.moveY, -1.0f, 1.0f);
 
             const float lenSq = inputX * inputX + inputZ * inputZ;
             if (lenSq <= 0.0f)
