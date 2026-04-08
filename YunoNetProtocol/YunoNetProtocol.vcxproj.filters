@@ -54,58 +54,19 @@
     <ClInclude Include="ProtocolPCH\pch.h">
       <Filter>ProtocolPCH</Filter>
     </ClInclude>
-    <ClInclude Include="Public\Net\S2CPackets\S2C_EnterOK.h">
-      <Filter>Public\Network\Packets</Filter>
-    </ClInclude>
-    <ClInclude Include="Public\Net\C2SPackets\C2S_MatchLeave.h">
-      <Filter>Public\Network\Packets</Filter>
-    </ClInclude>
-    <ClInclude Include="Public\Net\C2SPackets\C2S_MatchEnter.h">
-      <Filter>Public\Network\Packets</Filter>
-    </ClInclude>
     <ClInclude Include="Public\Net\ErrorPackets\S2C_Error.h">
       <Filter>Public\Network\Packets</Filter>
     </ClInclude>
-    <ClInclude Include="Public\Net\S2CPackets\S2C_CountDown.h">
+    <ClInclude Include="Public\Net\C2SPackets\C2S_AuthHello.h">
       <Filter>Public\Network\Packets</Filter>
     </ClInclude>
-    <ClInclude Include="Public\Net\C2SPackets\C2S_ReadySet.h">
+    <ClInclude Include="Public\Net\C2SPackets\C2S_AuthLogout.h">
       <Filter>Public\Network\Packets</Filter>
     </ClInclude>
-    <ClInclude Include="Public\Net\C2SPackets\C2S_SubmitWeapon.h">
-      <Filter>Public</Filter>
-    </ClInclude>
-    <ClInclude Include="Public\Net\S2CPackets\S2C_ReadyState.h">
-      <Filter>Public</Filter>
-    </ClInclude>
-    <ClInclude Include="Public\Net\S2CPackets\S2C_RoundStart.h">
-      <Filter>Public</Filter>
-    </ClInclude>
-    <ClInclude Include="Public\Net\C2SPackets\C2S_BattlePackets.h">
+    <ClInclude Include="Public\Net\C2SPackets\C2S_AuthRegister.h">
       <Filter>Public\Network\Packets</Filter>
     </ClInclude>
-    <ClInclude Include="Public\Net\S2CPackets\S2C_BattlePackets.h">
-      <Filter>Public\Network\Packets</Filter>
-    </ClInclude>
-    <ClInclude Include="Public\Net\S2CPackets\S2C_CardPackets.h">
-      <Filter>Public\Network\Packets</Filter>
-    </ClInclude>
-    <ClInclude Include="Public\Net\C2SPackets\C2S_CardPackets.h">
-      <Filter>Public\Network\Packets</Filter>
-    </ClInclude>
-    <ClInclude Include="Public\Net\S2CPackets\S2C_EndGame.h">
-      <Filter>Public\Network\Packets</Filter>
-    </ClInclude>
-    <ClInclude Include="Public\Net\C2SPackets\C2S_Emote.h">
-      <Filter>Public\Network\Packets</Filter>
-    </ClInclude>
-    <ClInclude Include="Public\Net\S2CPackets\S2C_Emote.h">
-      <Filter>Public\Network\Packets</Filter>
-    </ClInclude>
-    <ClInclude Include="Public\Net\S2CPackets\S2C_EndGame_Disconnect.h">
-      <Filter>Public\Network\Packets</Filter>
-    </ClInclude>
-    <ClInclude Include="Public\Net\C2SPackets\C2S_Surrender.h">
+    <ClInclude Include="Public\Net\S2CPackets\S2C_AuthResult.h">
       <Filter>Public\Network\Packets</Filter>
     </ClInclude>
   </ItemGroup>
@@ -128,58 +89,19 @@
     <ClCompile Include="ProtocolPCH\pch.cpp">
       <Filter>ProtocolPCH</Filter>
     </ClCompile>
-    <ClCompile Include="Private\Net\C2SPackets\C2S_MatchEnter.cpp">
-      <Filter>Private\Network\Packets</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\Net\C2SPackets\C2S_MatchLeave.cpp">
-      <Filter>Private\Network\Packets</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\Net\S2CPackets\S2C_EnterOK.cpp">
-      <Filter>Private\Network\Packets</Filter>
-    </ClCompile>
     <ClCompile Include="Private\Net\ErrorPackets\S2C_Error.cpp">
       <Filter>Private\Network\Packets</Filter>
     </ClCompile>
-    <ClCompile Include="Private\Net\S2CPackets\S2C_CountDown.cpp">
+    <ClCompile Include="Private\Net\C2SPackets\C2S_AuthHello.cpp">
       <Filter>Private\Network\Packets</Filter>
     </ClCompile>
-    <ClCompile Include="Private\Net\C2SPackets\C2S_ReadySet.cpp">
+    <ClCompile Include="Private\Net\C2SPackets\C2S_AuthLogout.cpp">
       <Filter>Private\Network\Packets</Filter>
     </ClCompile>
-    <ClCompile Include="Private\Net\C2SPackets\C2S_BattlePackets.cpp">
+    <ClCompile Include="Private\Net\C2SPackets\C2S_AuthRegister.cpp">
       <Filter>Private\Network\Packets</Filter>
     </ClCompile>
-    <ClCompile Include="Private\Net\S2CPackets\S2C_BattlePackets.cpp">
-      <Filter>Private\Network\Packets</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\Net\S2CPackets\S2C_CardPackets.cpp">
-      <Filter>Private\Network\Packets</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\Net\C2SPackets\C2S_CardPackets.cpp">
-      <Filter>Private\Network\Packets</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\Net\S2CPackets\S2C_EndGame.cpp">
-      <Filter>Private\Network\Packets</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\Net\S2CPackets\S2C_Emote.cpp">
-      <Filter>Private\Network\Packets</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\Net\C2SPackets\C2S_Emote.cpp">
-      <Filter>Private\Network\Packets</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\Net\C2SPackets\C2S_SubmitWeapon.cpp">
-      <Filter>Private\Network\Packets</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\Net\S2CPackets\S2C_ReadyState.cpp">
-      <Filter>Private\Network\Packets</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\Net\S2CPackets\S2C_RoundStart.cpp">
-      <Filter>Private\Network\Packets</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\Net\S2CPackets\S2C_EndGame_Disconnect.cpp">
-      <Filter>Private\Network\Packets</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\Net\C2SPackets\C2S_Surrender.cpp">
+    <ClCompile Include="Private\Net\S2CPackets\S2C_AuthResult.cpp">
       <Filter>Private\Network\Packets</Filter>
     </ClCompile>
   </ItemGroup>
