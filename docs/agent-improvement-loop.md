@@ -110,3 +110,157 @@ Use one or more labels per issue:
 ### Confidence
 - Delivery confidence (0-100): 92
 - Verification depth: medium
+
+## Entry: 2026-04-08 13:00 KST | Task: Add Ping RTT Echo Handling
+### Summary
+- Goal: Implement Ping request/response path to measure client-server delay.
+- Outcome: Reused existing C2S_Ping/S2C_Pong protocol, added server immediate echo and client RTT log.
+
+### What Went Well
+- Reused existing packet IDs/files to avoid unnecessary protocol expansion cost.
+- Verified impacted targets with focused builds (`YunoNetProtocol`, `YunoServer`, `YunoGame`).
+
+### Mistakes
+- Label: COST_WASTE
+  Evidence: Initial `rg` command failed due execution permission in this environment.
+  Root cause: Assumed `rg` availability from prior runs.
+  Fix applied: Switched immediately to PowerShell-native file search.
+
+### Cost Signals
+- Commands run: 14
+- Build runs: 3 (targeted)
+- Test runs: 0
+- Avoidable retries: 1
+
+### Prevention Rules (Next Tasks)
+- Keep: Prefer targeted build scope first.
+- Add: If `rg` fails in sandbox, switch to `Get-ChildItem` + `Select-String` without retry loops.
+- Remove: None
+
+### Confidence
+- Delivery confidence (0-100): 90
+- Verification depth: medium
+
+## Entry: 2026-04-08 13:25 KST | Task: Add Protocol Test Automation Policy
+### Summary
+- Goal: Enforce automatic protocol test script creation, execution log output, and analysis report output.
+- Outcome: Added policy links in AGENTS.md, created protocol test operations guide, updated user template, and initialized Result directories.
+
+### What Went Well
+- Converted policy into explicit file paths and naming conventions to reduce ambiguity.
+- Added fallback policy for blocked runtime environments.
+
+### Mistakes
+- Label: COST_WASTE
+  Evidence: Initial parallel directory/file creation attempted before parent path was fully available.
+  Root cause: Race condition in parallel setup commands.
+  Fix applied: Re-ran creation in one sequential command.
+
+### Cost Signals
+- Commands run: 10
+- Build runs: 0
+- Test runs: 0
+- Avoidable retries: 1
+
+### Prevention Rules (Next Tasks)
+- Keep: For path setup, use sequential command when parent/child directory dependency exists.
+- Add: When policy requires artifacts, pre-create `Result\Log` and `Result\Report` before test execution.
+- Remove: None
+
+### Confidence
+- Delivery confidence (0-100): 93
+- Verification depth: medium
+
+## Entry: 2026-04-08 17:46 KST | Task: Execute Ping Protocol Automated Test
+### Summary
+- Goal: Run Ping/Pong runtime verification and generate required log/report artifacts.
+- Outcome: Added `scripts/test_ping.ps1`, executed test, and produced PASS artifacts under `Result/Log` and `Result/Report`.
+
+### What Went Well
+- Runtime packet validation confirmed expected `S2C_Pong` type and `reqTime` echo match.
+- RTT metric was captured directly from socket round-trip.
+
+### Mistakes
+- Label: TEST_MISS
+  Evidence: First execution failed due same-path stdout/stderr redirection in `Start-Process`.
+  Root cause: Platform-specific PowerShell process redirection constraint.
+  Fix applied: Removed conflicting redirection and simplified process start.
+- Label: TEST_MISS
+  Evidence: Second execution failed due UInt32 conversion overflow for timestamp.
+  Root cause: Unsafe cast from Unix millisecond value to UInt32.
+  Fix applied: Applied modulo conversion before UInt32 cast.
+
+### Cost Signals
+- Commands run: 8
+- Build runs: 0
+- Test runs: 4
+- Avoidable retries: 2
+
+### Prevention Rules (Next Tasks)
+- Keep: Validate process launch options in script before first run.
+- Add: For 32-bit protocol timestamps, normalize with modulo before cast.
+- Remove: None
+
+### Confidence
+- Delivery confidence (0-100): 94
+- Verification depth: high
+
+## Entry: 2026-04-08 17:52 KST | Task: Set Report Language Policy
+### Summary
+- Goal: Keep runtime logs unchanged and enforce Korean as default report language policy.
+- Outcome: Updated AGENTS.md and protocol test operations policy to require Korean reports by default while preserving raw logs.
+
+### What Went Well
+- Policy was added at both global rule level and protocol test operations level.
+- `scripts/test_ping.ps1` was stabilized after encoding-related parse issues.
+
+### Mistakes
+- Label: FORMAT_MISS
+  Evidence: Temporary script parse error due corrupted multi-byte text block.
+  Root cause: Unsafe inline edits under mixed encoding display.
+  Fix applied: Rewrote script with stable ASCII-safe structure.
+
+### Cost Signals
+- Commands run: 8
+- Build runs: 0
+- Test runs: 1
+- Avoidable retries: 1
+
+### Prevention Rules (Next Tasks)
+- Keep: For script stability, apply full-file rewrite if encoding corruption appears.
+- Add: Keep policy text in docs; keep runtime scripts parse-safe first, then localize output with controlled encoding.
+- Remove: None
+
+### Confidence
+- Delivery confidence (0-100): 91
+- Verification depth: medium
+
+## Entry: 2026-04-08 17:55 KST | Task: Run Ping Test And Write Korean Report
+### Summary
+- Goal: Execute Ping/Pong runtime test and produce a Korean report while keeping raw log format.
+- Outcome: Test passed and report file was rewritten in Korean without changing log content.
+
+### What Went Well
+- End-to-end test evidence captured with packet type, reqTime echo, and RTT value.
+- Report language policy (Korean) applied directly to the generated artifact.
+
+### Mistakes
+- Label: FORMAT_MISS
+  Evidence: Auto-generated report from script remained English by default.
+  Root cause: Script/report template localization was not yet enforced end-to-end.
+  Fix applied: Rewrote the generated report file in Korean for this run.
+
+### Cost Signals
+- Commands run: 4
+- Build runs: 0
+- Test runs: 1
+- Avoidable retries: 0
+
+### Prevention Rules (Next Tasks)
+- Keep: Preserve raw logs as-is.
+- Add: Ensure final report artifact language is Korean before closing protocol test task.
+- Remove: None
+
+### Confidence
+- Delivery confidence (0-100): 95
+- Verification depth: high

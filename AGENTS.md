@@ -63,11 +63,36 @@ Expected output:
   - `C:\Project\MORPG_Network_Sample\docs\protocol-style-guide.en.md`
   - `C:\Project\MORPG_Network_Sample\docs\protocol-style-guide.ko.md`
   - `C:\Project\MORPG_Network_Sample\docs\agent-active-rules.md`
+  - `C:\Project\MORPG_Network_Sample\docs\protocol-test-ops.md`
 - For protocol feature implementation, run:
   - `powershell -ExecutionPolicy Bypass -File .\scripts\build_and_test.ps1`
   - `powershell -ExecutionPolicy Bypass -File .\scripts\smoke_world_enter.ps1`
 - If protocol document and implementation differ, update both and report mismatch explicitly.
 - Do not declare protocol feature complete unless build/test/smoke steps have been executed and results are reported.
+
+## Protocol Test Automation Rule
+- When a protocol feature is requested, the Agent must do these steps without requiring a separate user prompt:
+1. Create or update a protocol-specific test script under `C:\Project\MORPG_Network_Sample\scripts\` using this naming:
+   - `test_<protocol_or_feature>.ps1`
+2. Ensure result directories exist:
+   - `C:\Project\MORPG_Network_Sample\Result\Log`
+   - `C:\Project\MORPG_Network_Sample\Result\Report`
+3. Execute the protocol test script after implementation.
+4. Save execution logs to:
+   - `C:\Project\MORPG_Network_Sample\Result\Log\<timestamp>_<protocol_or_feature>.log`
+5. Generate an analysis report in Markdown:
+   - `C:\Project\MORPG_Network_Sample\Result\Report\<timestamp>_<protocol_or_feature>_report.md`
+   - Report language policy: Korean by default
+6. Report must include:
+   - objective and expected behavior
+   - executed commands
+   - pass/fail result
+   - key log evidence
+   - root cause for failures
+   - next actions
+- If runtime environment prevents execution, still generate:
+1. attempted command log
+2. blocker analysis report with concrete missing prerequisites
 
 ## Agent Learning Loop Rule
 - For every meaningful task, the Agent must:

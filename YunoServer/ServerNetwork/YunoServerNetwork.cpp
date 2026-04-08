@@ -10,9 +10,11 @@
 #include "C2S_AckSnapshot.h"
 #include "C2S_EnterWorld.h"
 #include "C2S_MoveInput.h"
+#include "Net/C2SPackets/C2S_Ping.h"
 #include "PacketBuilder.h"
 #include "PacketHeader.h"
 #include "PacketType.h"
+#include "Net/S2CPackets/S2C_Pong.h"
 #include "S2C_WorldSnapshot.h"
 
 namespace yuno::server
@@ -180,6 +182,10 @@ namespace yuno::server
         else if (header.type == yuno::net::PacketType::C2S_AckSnapshot)
         {
             HandleAckSnapshot(std::move(session), body, bodyLen);
+        }
+        else if (header.type == yuno::net::PacketType::C2S_Ping)
+        {
+            HandlePing(std::move(session), body, bodyLen);
         }
         else
         {
@@ -374,6 +380,40 @@ namespace yuno::server
         {
             player.lastAckedSnapshotId = ack.snapshotId;
         }
+    }
+
+    void YunoServerNetwork::HandlePing(
+        std::shared_ptr<yuno::net::TcpSession> session,
+        const std::uint8_t* body,
+        std::uint32_t bodyLen)
+    {
+        if (!session || !body)
+            return;
+
+        yuno::net::packets::C2S_Ping ping{};
+        try
+        {
+            yuno::net::ByteReader reader(body, bodyLen);
+            ping = yuno::net::packets::C2S_Ping::Deserialize(reader);
+            if (reader.Remaining() != 0)
+                return;
+        }
+        catch (...)
+        {
+            return;
+        }
+
+        yuno::net::packets::S2C_Pong pong{};
+        pong.reqTime = ping.reqTime;
+
+        auto bytes = yuno::net::PacketBuilder::Build(
+            yuno::net::PacketType::S2C_Pong,
+            [&pong](yuno::net::ByteWriter& w)
+            {
+                pong.Serialize(w);
+            });
+
+        session->Send(std::move(bytes));
     }
 
     void YunoServerNetwork::BroadcastWorldSnapshot()

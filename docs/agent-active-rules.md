@@ -22,6 +22,8 @@ Purpose:
   - Add packet type in `C:\Project\MORPG_Network_Sample\YunoNetProtocol\Public\Net\PacketType.h`
   - Add `.h` in `Public`, `.cpp` in `Private`
   - Use packet category folders (`C2SPackets`, `S2CPackets`, `ErrorPackets`, or dedicated folder)
+- If `rg` is unavailable in current sandbox, switch to `Get-ChildItem` + `Select-String` immediately.
+- For protocol tasks, auto-create/update `scripts\test_<protocol_or_feature>.ps1`, execute it, and write artifacts to `Result\Log` and `Result\Report`.
 
 ### Remove
 - None
