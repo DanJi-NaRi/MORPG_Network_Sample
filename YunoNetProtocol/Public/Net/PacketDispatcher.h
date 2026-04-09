@@ -1,5 +1,8 @@
 #pragma once
 
+#include <functional>
+#include <unordered_map>
+
 
 #include "NetPeer.h"
 #include "PacketHeader.h"

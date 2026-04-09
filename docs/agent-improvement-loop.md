@@ -264,3 +264,9 @@ Use one or more labels per issue:
 ### Confidence
 - Delivery confidence (0-100): 95
 - Verification depth: high
+
+## Entry: 2026-04-09 20:49 KST | Task: Transport Hardening and Server Packet Routing Stabilization
+- Goal: Improve connection lifecycle robustness, packet flood defense, and server packet handler maintainability.
+- Outcome: Added inbound packet-rate budgeting in TcpSession, added TcpServer session cap/options and targeted session disconnect API, and migrated YunoServerNetwork packet routing to PacketDispatcher with per-session packet budget enforcement.
+- Verification: Created and ran `scripts\test_transport_hardening.ps1`; PASS with log `Result\Log\20260409_204805_transport_hardening.log` and report `Result\Report\20260409_204805_transport_hardening_report.md`.
+- Learning: Explicit transport/server boundary rate-limits plus dispatcher-based routing reduced ad-hoc branching and made future protocol extension safer.

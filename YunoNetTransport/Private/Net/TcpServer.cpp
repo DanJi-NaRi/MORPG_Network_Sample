@@ -13,12 +13,20 @@ namespace yuno::net
 
     bool TcpServer::Start(std::uint16_t port, std::size_t backlog)
     {
+        return Start(port, ServerOptions{}, backlog);
+    }
+
+    bool TcpServer::Start(std::uint16_t port, const ServerOptions& options, std::size_t backlog)
+    {
         if (m_running)
             return true;
 
         boost::system::error_code ec;
 
         boost::asio::ip::tcp::endpoint ep(boost::asio::ip::tcp::v4(), port);
+        m_options = options;
+        if (m_options.maxSessions == 0)
+            m_options.maxSessions = 1;
 
         m_acceptor.open(ep.protocol(), ec);
         if (ec) return false;
@@ -74,8 +82,18 @@ namespace yuno::net
                 }
 
                 boost::system::error_code ignored;
-                socket.set_option(boost::asio::ip::tcp::no_delay(true), ignored);
-                socket.set_option(boost::asio::socket_base::keep_alive(true), ignored);
+                if (m_options.enableNoDelay)
+                    socket.set_option(boost::asio::ip::tcp::no_delay(true), ignored);
+                if (m_options.enableKeepAlive)
+                    socket.set_option(boost::asio::socket_base::keep_alive(true), ignored);
+
+                if (m_sessions.size() >= m_options.maxSessions)
+                {
+                    socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored);
+                    socket.close(ignored);
+                    DoAccept();
+                    return;
+                }
 
                 // 서버
                 const sessionId sid = NextSessionId();
@@ -149,6 +167,16 @@ namespace yuno::net
         if (it == m_sessions.end())
             return nullptr;
         return it->second;
+    }
+
+    bool TcpServer::DisconnectSession(sessionId sid)
+    {
+        auto it = m_sessions.find(sid);
+        if (it == m_sessions.end() || !it->second)
+            return false;
+
+        it->second->Close();
+        return true;
     }
 
 }

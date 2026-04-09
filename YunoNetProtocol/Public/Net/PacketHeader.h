@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #include "PacketType.h"
 #include "ByteIO.h"
 

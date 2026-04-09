@@ -14,6 +14,8 @@ function Resolve-BinaryPath {
     )
 
     $candidates = @(
+        ".\Bin\$Platform\$Configuration\LoginServer\$Name.exe",
+        ".\Bin\$Platform\$Configuration\Server\$Name.exe",
         ".\Bin\$Platform\$Configuration\$Name.exe",
         ".\Bin\$Configuration\$Name.exe",
         ".\Bin\$Name.exe"
