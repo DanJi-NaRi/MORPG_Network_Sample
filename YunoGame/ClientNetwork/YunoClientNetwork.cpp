@@ -8,13 +8,25 @@
 #include "ByteIO.h"
 #include "C2S_AckSnapshot.h"
 #include "PacketType.h"
+#include "S2C_Pong.h"
 #include "S2C_WorldSnapshot.h"
 #include "WorldPlayerState.h"
 
 // Packet utilities
+#include <chrono>
 
 namespace yuno::game
 {
+    namespace
+    {
+        std::uint32_t NowMs32()
+        {
+            const auto now = std::chrono::steady_clock::now().time_since_epoch();
+            const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
+            return static_cast<std::uint32_t>(ms & 0xFFFFFFFFull);
+        }
+    }
+
     YunoClientNetwork::YunoClientNetwork()
         : m_workGuard(boost::asio::make_work_guard(m_io))
         , m_client(m_io)
@@ -218,6 +230,31 @@ namespace yuno::game
                         });
                     this->SendPacket(std::move(ackBytes));
                     m_lastSentAckSnapshotId.store(ack.snapshotId, std::memory_order_relaxed);
+                }
+                catch (...)
+                {
+                }
+            });
+
+        Dispatcher().RegisterRaw(
+            PacketType::S2C_Pong,
+            [](const NetPeer&, const PacketHeader&, const std::uint8_t* body, std::uint32_t bodyLen)
+            {
+                if (!body)
+                    return;
+
+                try
+                {
+                    ByteReader reader(body, bodyLen);
+                    const auto pong = yuno::net::packets::S2C_Pong::Deserialize(reader);
+                    if (reader.Remaining() != 0)
+                        return;
+
+                    const std::uint32_t nowMs = NowMs32();
+                    const std::uint32_t rttMs = nowMs - pong.reqTime;
+
+                    std::cout << "[Client] pong rtt=" << rttMs << "ms"
+                              << " reqTime=" << pong.reqTime << "\n";
                 }
                 catch (...)
                 {

@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 
 #include "RenderTypes.h"
@@ -24,6 +24,7 @@
 #include "PacketBuilder.h"
 #include "WorldPlayerState.h"
 #include "utilityClass.h"
+#include <chrono>
 #include <cmath>
 #include <cstdlib>
 #include <string>
@@ -263,7 +264,9 @@ void GameApp::OnUpdate(float dt)
         {
             using namespace yuno::net;
             yuno::net::packets::C2S_Ping ping{};
-            ping.nonce = 1000;
+            const auto now = std::chrono::steady_clock::now().time_since_epoch();
+            const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
+            ping.reqTime = static_cast<std::uint32_t>(ms & 0xFFFFFFFFull);
 
             auto bytes = PacketBuilder::Build(
                 PacketType::C2S_Ping,

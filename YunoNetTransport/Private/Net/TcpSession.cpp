@@ -10,6 +10,7 @@ namespace yuno::net
         , m_strand(m_socket.get_executor())
         , m_idleTimer(m_socket.get_executor())
         , m_lastRecvTime(std::chrono::steady_clock::now())
+        , m_inboundWindowStart(std::chrono::steady_clock::now())
     {
     }
 
@@ -109,6 +110,12 @@ namespace yuno::net
 
         if (bodyLen == 0)
         {
+            if (!self->TryConsumeInboundBudget(yunoTCPPacketHeaderSize))
+            {
+                self->ReadHeader();
+                return;
+            }
+
             std::vector<std::uint8_t> packet;
             packet.reserve(yunoTCPPacketHeaderSize);
             packet.insert(packet.end(), m_readHeader.begin(), m_readHeader.end());
@@ -130,6 +137,12 @@ namespace yuno::net
                     if (ec)
                     {
                         self->NotifyDisconnected(ec);
+                        return;
+                    }
+
+                    if (!self->TryConsumeInboundBudget(yunoTCPPacketHeaderSize + self->m_readBody.size()))
+                    {
+                        self->ReadHeader();
                         return;
                     }
 
@@ -234,6 +247,27 @@ namespace yuno::net
         if (m_writeQueueBytes + nextPacketBytes > kMaxWriteQueueBytes)
             return false;
 
+        return true;
+    }
+
+    bool TcpSession::TryConsumeInboundBudget(std::size_t packetBytes)
+    {
+        const auto now = std::chrono::steady_clock::now();
+        if (now - m_inboundWindowStart >= kInboundRateWindow)
+        {
+            m_inboundWindowStart = now;
+            m_inboundPacketsInWindow = 0;
+            m_inboundBytesInWindow = 0;
+        }
+
+        if ((m_inboundPacketsInWindow + 1) > kMaxInboundPacketsPerWindow)
+            return false;
+
+        if ((m_inboundBytesInWindow + packetBytes) > kMaxInboundBytesPerWindow)
+            return false;
+
+        ++m_inboundPacketsInWindow;
+        m_inboundBytesInWindow += packetBytes;
         return true;
     }
 

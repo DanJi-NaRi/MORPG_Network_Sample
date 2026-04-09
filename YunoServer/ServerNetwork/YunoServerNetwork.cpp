@@ -1,4 +1,4 @@
-﻿#include "YunoServerNetwork.h"
+#include "YunoServerNetwork.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -10,9 +10,11 @@
 #include "C2S_AckSnapshot.h"
 #include "C2S_EnterWorld.h"
 #include "C2S_MoveInput.h"
+#include "Net/C2SPackets/C2S_Ping.h"
 #include "PacketBuilder.h"
 #include "PacketHeader.h"
 #include "PacketType.h"
+#include "Net/S2CPackets/S2C_Pong.h"
 #include "S2C_WorldSnapshot.h"
 
 namespace yuno::server
@@ -93,6 +95,8 @@ namespace yuno::server
             {
                 OnDisconnected(std::move(session), ec);
             });
+
+        RegisterPacketHandlers();
     }
 
     YunoServerNetwork::~YunoServerNetwork()
@@ -108,7 +112,12 @@ namespace yuno::server
             return false;
         }
 
-        const bool ok = m_server.Start(port);
+        yuno::net::TcpServer::ServerOptions options{};
+        options.maxSessions = 2048;
+        options.enableKeepAlive = true;
+        options.enableNoDelay = true;
+
+        const bool ok = m_server.Start(port, options);
         if (!ok)
         {
             std::cerr << "[Server] failed to start. port=" << port << "\n";
@@ -138,6 +147,7 @@ namespace yuno::server
     {
         m_server.Stop();
         m_players.clear();
+        m_sessionPacketBudgets.clear();
         DisconnectAuthDb();
         m_nextEntityId = 1;
         m_nextSnapshotId = 1;
@@ -161,27 +171,13 @@ namespace yuno::server
             return;
 
         const yuno::net::PacketHeader header = yuno::net::UnPackHeaderLE(packetBytes.data());
-        const std::size_t expectedSize =
-            yuno::net::yunoPacketHeaderSize + static_cast<std::size_t>(header.bodyLength);
-        if (packetBytes.size() != expectedSize)
+        const std::uint64_t sid = session->GetSessionId();
+        if (!ConsumeSessionPacketBudget(sid, header.type))
             return;
 
-        const std::uint8_t* body = packetBytes.data() + yuno::net::yunoPacketHeaderSize;
-        const std::uint32_t bodyLen = header.bodyLength;
-
-        if (header.type == yuno::net::PacketType::C2S_EnterWorld)
-        {
-            HandleEnterWorld(std::move(session), body, bodyLen);
-        }
-        else if (header.type == yuno::net::PacketType::C2S_MoveInput)
-        {
-            HandleMoveInput(std::move(session), body, bodyLen);
-        }
-        else if (header.type == yuno::net::PacketType::C2S_AckSnapshot)
-        {
-            HandleAckSnapshot(std::move(session), body, bodyLen);
-        }
-        else
+        yuno::net::NetPeer peer{};
+        peer.sId = sid;
+        if (!m_dispatcher.Dispatch(peer, packetBytes))
         {
             std::cout << "[Server] ignore packet type="
                 << static_cast<unsigned>(static_cast<std::uint8_t>(header.type)) << "\n";
@@ -376,6 +372,40 @@ namespace yuno::server
         }
     }
 
+    void YunoServerNetwork::HandlePing(
+        std::shared_ptr<yuno::net::TcpSession> session,
+        const std::uint8_t* body,
+        std::uint32_t bodyLen)
+    {
+        if (!session || !body)
+            return;
+
+        yuno::net::packets::C2S_Ping ping{};
+        try
+        {
+            yuno::net::ByteReader reader(body, bodyLen);
+            ping = yuno::net::packets::C2S_Ping::Deserialize(reader);
+            if (reader.Remaining() != 0)
+                return;
+        }
+        catch (...)
+        {
+            return;
+        }
+
+        yuno::net::packets::S2C_Pong pong{};
+        pong.reqTime = ping.reqTime;
+
+        auto bytes = yuno::net::PacketBuilder::Build(
+            yuno::net::PacketType::S2C_Pong,
+            [&pong](yuno::net::ByteWriter& w)
+            {
+                pong.Serialize(w);
+            });
+
+        session->Send(std::move(bytes));
+    }
+
     void YunoServerNetwork::BroadcastWorldSnapshot()
     {
         const std::uint32_t serverTick = ++m_serverTick;
@@ -444,8 +474,99 @@ namespace yuno::server
             }
             m_players.erase(it);
         }
+        m_sessionPacketBudgets.erase(sid);
 
         std::cout << "[Server] disconnected sid=" << sid << " ec=" << ec.message() << "\n";
+    }
+
+    void YunoServerNetwork::RegisterPacketHandlers()
+    {
+        m_dispatcher.RegisterRaw(
+            yuno::net::PacketType::C2S_EnterWorld,
+            [this](const yuno::net::NetPeer& peer, const yuno::net::PacketHeader&, const std::uint8_t* body, std::uint32_t bodyLen)
+            {
+                auto session = FindSession(peer.sId);
+                if (!session)
+                    return;
+                HandleEnterWorld(std::move(session), body, bodyLen);
+            });
+
+        m_dispatcher.RegisterRaw(
+            yuno::net::PacketType::C2S_MoveInput,
+            [this](const yuno::net::NetPeer& peer, const yuno::net::PacketHeader&, const std::uint8_t* body, std::uint32_t bodyLen)
+            {
+                auto session = FindSession(peer.sId);
+                if (!session)
+                    return;
+                HandleMoveInput(std::move(session), body, bodyLen);
+            });
+
+        m_dispatcher.RegisterRaw(
+            yuno::net::PacketType::C2S_AckSnapshot,
+            [this](const yuno::net::NetPeer& peer, const yuno::net::PacketHeader&, const std::uint8_t* body, std::uint32_t bodyLen)
+            {
+                auto session = FindSession(peer.sId);
+                if (!session)
+                    return;
+                HandleAckSnapshot(std::move(session), body, bodyLen);
+            });
+
+        m_dispatcher.RegisterRaw(
+            yuno::net::PacketType::C2S_Ping,
+            [this](const yuno::net::NetPeer& peer, const yuno::net::PacketHeader&, const std::uint8_t* body, std::uint32_t bodyLen)
+            {
+                auto session = FindSession(peer.sId);
+                if (!session)
+                    return;
+                HandlePing(std::move(session), body, bodyLen);
+            });
+    }
+
+    bool YunoServerNetwork::ConsumeSessionPacketBudget(std::uint64_t sessionId, yuno::net::PacketType type)
+    {
+        const auto now = std::chrono::steady_clock::now();
+        auto [it, inserted] = m_sessionPacketBudgets.emplace(sessionId, SessionPacketBudget{});
+        SessionPacketBudget& budget = it->second;
+        if (inserted || budget.windowStart.time_since_epoch().count() == 0)
+        {
+            budget.windowStart = now;
+        }
+
+        if (now - budget.windowStart >= kPacketBudgetWindow)
+        {
+            budget.windowStart = now;
+            budget.totalPacketsInWindow = 0;
+            budget.moveInputPacketsInWindow = 0;
+            budget.droppedPacketsInWindow = 0;
+        }
+
+        if ((budget.totalPacketsInWindow + 1) > kMaxPacketsPerWindow)
+        {
+            ++budget.droppedPacketsInWindow;
+            if (budget.droppedPacketsInWindow > kMaxDropsPerWindow)
+            {
+                m_server.DisconnectSession(sessionId);
+            }
+            return false;
+        }
+
+        if (type == yuno::net::PacketType::C2S_MoveInput
+            && (budget.moveInputPacketsInWindow + 1) > kMaxMoveInputPacketsPerWindow)
+        {
+            ++budget.droppedPacketsInWindow;
+            if (budget.droppedPacketsInWindow > kMaxDropsPerWindow)
+            {
+                m_server.DisconnectSession(sessionId);
+            }
+            return false;
+        }
+
+        ++budget.totalPacketsInWindow;
+        if (type == yuno::net::PacketType::C2S_MoveInput)
+        {
+            ++budget.moveInputPacketsInWindow;
+        }
+        return true;
     }
 
     bool YunoServerNetwork::ConnectAuthDbFromEnv()

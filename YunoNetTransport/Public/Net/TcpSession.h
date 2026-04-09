@@ -54,6 +54,7 @@ namespace yuno::net
         void ArmIdleTimer();
         void RefreshLastRecvTime();
         bool CheckWriteQueueBudget(std::size_t nextPacketBytes) const;
+        bool TryConsumeInboundBudget(std::size_t packetBytes);
 
         static std::uint32_t ReadU32LE(const std::uint8_t* p);
 
@@ -71,6 +72,9 @@ namespace yuno::net
         std::deque<std::shared_ptr<const std::vector<std::uint8_t>>> m_writeQ;
         std::size_t m_writeQueueBytes = 0;
         bool m_writing = false;
+        std::chrono::steady_clock::time_point m_inboundWindowStart{};
+        std::uint32_t m_inboundPacketsInWindow = 0;
+        std::size_t m_inboundBytesInWindow = 0;
 
         OnPacketFn m_onPacket;
         OnDisconnectedFn m_onDisconnected;
@@ -80,5 +84,8 @@ namespace yuno::net
         static constexpr std::size_t kMaxWriteQueuePackets = 1024;
         static constexpr std::size_t kMaxWriteQueueBytes = 8u * 1024u * 1024u;
         static constexpr std::chrono::seconds kIdleTimeout{ 30 };
+        static constexpr std::chrono::seconds kInboundRateWindow{ 1 };
+        static constexpr std::uint32_t kMaxInboundPacketsPerWindow = 240;
+        static constexpr std::size_t kMaxInboundBytesPerWindow = 1u * 1024u * 1024u;
     };
 }

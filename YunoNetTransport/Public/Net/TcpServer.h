@@ -20,6 +20,13 @@ namespace yuno::net
     class TcpServer final
     {
     public:
+        struct ServerOptions
+        {
+            std::size_t maxSessions = 2048;
+            bool enableNoDelay = true;
+            bool enableKeepAlive = true;
+        };
+
         using OnPacketFn =
             std::function<void(TcpSession::YunoSession session, std::vector<std::uint8_t>&& packet)>;
 
@@ -34,6 +41,7 @@ namespace yuno::net
 
         // 서버 시작(바인드+리스닝)
         bool Start(std::uint16_t port, std::size_t backlog = boost::asio::socket_base::max_listen_connections);
+        bool Start(std::uint16_t port, const ServerOptions& options, std::size_t backlog = boost::asio::socket_base::max_listen_connections);
 
         // 서버 정지(accept 중단 + 모든 세션 종료)
         void Stop();
@@ -48,6 +56,7 @@ namespace yuno::net
 
         std::size_t GetSessionCount() const { return m_sessions.size(); }
         TcpSession::YunoSession FindSession(sessionId sid) const;
+        bool DisconnectSession(sessionId sid);
 
     private:
         void DoAccept();
@@ -65,6 +74,7 @@ namespace yuno::net
         boost::asio::ip::tcp::acceptor m_acceptor;
 
         bool m_running = false;
+        ServerOptions m_options{};
 
         sessionId m_nextSessionId = 0;
 
