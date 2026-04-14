@@ -11,9 +11,9 @@ Purpose:
   - `C:\Project\MORPG_Network_Sample\Result\Log\<timestamp>_<protocol_or_feature>.log`
 - Analysis report path:
   - `C:\Project\MORPG_Network_Sample\Result\Report\<timestamp>_<protocol_or_feature>_report.md`
-- Report language:
-  - Korean by default
-  - Logs remain in original runtime language (no forced translation)
+- Log and report language:
+  - English by default
+  - Keep generated headings, summaries, and analysis in English
 
 ## 2) Directory Policy
 - Ensure these directories exist before test execution:

@@ -79,7 +79,7 @@
   - `C:\Project\MORPG_Network_Sample\Result\Log\<timestamp>_<protocol_or_feature>.log`
 - Markdown 보고서는 다음 위치에 생성한다:
   - `C:\Project\MORPG_Network_Sample\Result\Report\<timestamp>_<protocol_or_feature>_report.md`
-- 보고서 언어 정책: 기본 한국어
+- 로그/보고서 언어 정책: 기본 영어
 - 보고서에는 반드시 다음을 포함한다:
 1. 목적과 기대 동작
 2. 실행한 명령

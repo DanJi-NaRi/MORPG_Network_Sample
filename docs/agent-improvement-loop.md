@@ -421,3 +421,73 @@ Use one or more labels per issue:
 ### Confidence
 - Delivery confidence (0-100): 95
 - Verification depth: high
+
+## Entry: 2026-04-14 11:14 KST | Task: Set Required DB Credential Environment Variables
+- Goal: Prevent DB connection failure caused by missing required credential env vars.
+- Outcome: Set `YUNO_DB_USER` and `YUNO_DB_PASS` for current process and persisted them at User scope.
+- Verification: Confirmed in elevated context that User scope has `YUNO_DB_USER=***REMOVED***` and `YUNO_DB_PASS` is set.
+- Learning: For credential configuration, OS environment variables are safer than source/script hardcoding while keeping runtime behavior deterministic.
+
+## Entry: 2026-04-14 16:35 KST | Task: Add World-Enter E2E Probe and Bounded Script Refactor
+### Summary
+- Goal: Finish the incomplete world-enter verification work by adding a real login->world-enter->snapshot-ack probe and refactoring only the surrounding test scripts.
+- Outcome: Added a reusable world-enter probe, a protocol-specific `test_world_enter.ps1` artifact-producing test, and a small shared process-helper script reused by smoke flow; verified build, smoke, and protocol test successfully.
+
+### What Went Well
+- Reusing one probe in both smoke and protocol-test flows reduced duplication while keeping scope inside the scripts directory.
+- A fast failing smoke run exposed a PowerShell automatic-variable naming issue before the longer test sequence.
+
+### Mistakes
+- Label: PS_AUTO_VARIABLE_COLLISION
+  Evidence: Initial scripts used `Host` as a parameter name and PowerShell treated it as the read-only automatic variable `$Host`.
+  Root cause: I ported helper naming from network terminology without checking PowerShell reserved automatic variables.
+  Fix applied: Renamed helper parameters to `HostName` and re-ran smoke/test verification.
+- Label: DB_SCHEMA_ASSUMPTION
+  Evidence: The first probe username exceeded the SQL procedure's `VARCHAR(30)` limit and caused `REGISTER_FAILED`.
+  Root cause: I assumed a timestamped test username length was unconstrained.
+  Fix applied: Shortened and bounded the generated username before rerunning the probe.
+
+### Cost Signals
+- Commands run: 16
+- Build runs: 1
+- Test runs: 2
+- Avoidable retries: 2
+
+### Prevention Rules (Next Tasks)
+- Keep: For PowerShell scripts, avoid parameter names that collide with automatic variables like `$Host`.
+- Add: For protocol E2E probes, check backing SQL/schema limits before generating synthetic identifiers.
+- Remove: None
+
+### Confidence
+- Delivery confidence (0-100): 96
+- Verification depth: high
+
+## Entry: 2026-04-14 17:35 KST | Task: Switch Generated Logs and Reports to English by Default
+### Summary
+- Goal: Change the workspace policy and active script output so generated logs and Markdown reports are authored in English by default.
+- Outcome: Updated the repository policy documents (`AGENTS.md`, `Agents_kr.md`, `docs/protocol-test-ops.md`) and converted the remaining Korean report content in `scripts/test_world_enter.ps1` to English. Verified the generated log/report language with a fresh protocol test artifact.
+
+### What Went Well
+- The language policy lived in a small set of central documents, so the policy update stayed localized and easy to audit.
+- A fresh generated `world_enter` log/report confirmed the new output language without needing to edit historical artifacts.
+
+### Mistakes
+- Label: ENV_ASSUMPTION
+  Evidence: The verification run timed out waiting for `YunoLoginServer` because the current session did not have the runtime prerequisites needed for the server to bind successfully.
+  Root cause: I optimized for fast verification of the regenerated artifact language before rechecking the current environment prerequisites.
+  Fix applied: Validated the newly generated log and report contents directly and recorded the blocker in English, which still proves the new language policy is active.
+
+### Cost Signals
+- Commands run: 9
+- Build runs: 0
+- Test runs: 1
+- Avoidable retries: 0
+
+### Prevention Rules (Next Tasks)
+- Keep: When the task is about artifact wording, verify the generated artifact text directly even if the runtime workflow itself is blocked.
+- Add: Treat language-policy changes as both a documentation update and a generated-output update; verify both surfaces.
+- Remove: None
+
+### Confidence
+- Delivery confidence (0-100): 95
+- Verification depth: medium

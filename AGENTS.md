@@ -464,7 +464,7 @@ Run `omx setup` to install all components. Run `omx doctor` to verify installati
 4. Execute the protocol-specific test script after implementation
 5. Save execution logs to `C:\Project\MORPG_Network_Sample\Result\Log\<timestamp>_<protocol_or_feature>.log`
 6. Generate a Markdown report at `C:\Project\MORPG_Network_Sample\Result\Report\<timestamp>_<protocol_or_feature>_report.md`
-   - Report language policy: Korean by default
+   - Log and report language policy: English by default
 7. Include these sections in the report:
    - objective and expected behavior
    - executed commands
@@ -493,4 +493,3 @@ Run `omx setup` to install all components. Run `omx doctor` to verify installati
 - `Agents_kr.md` is the Korean interpretation of this file.
 - Keep `AGENTS.md` and `Agents_kr.md` synchronized within the same task whenever either file changes.
 - If the two files diverge, report the mismatch explicitly and treat the work as incomplete until they are reconciled.
-
