@@ -37,12 +37,33 @@ function Resolve-MSBuildPath {
 function Invoke-MSBuildTarget {
     param(
         [string]$MSBuildPath,
-        [string]$Target
+        [string]$Target,
+        [string]$VcpkgRoot
     )
 
     Write-Host ""
     Write-Host "==> Building target: $Target ($Configuration|$Platform)"
-    & $MSBuildPath ".\YunoEngine.sln" "/t:$Target" "/p:Configuration=$Configuration" "/p:Platform=$Platform" "/m:1" "/nologo" "/v:minimal" "/clp:ErrorsOnly"
+    $msbuildArgs = @(
+        ".\YunoEngine.sln",
+        "/t:$Target",
+        "/p:Configuration=$Configuration",
+        "/p:Platform=$Platform",
+        "/m:1",
+        "/nologo",
+        "/v:minimal",
+        "/clp:ErrorsOnly"
+    )
+
+    if ($VcpkgRoot) {
+        $normalizedVcpkgRoot = [System.IO.Path]::GetFullPath($VcpkgRoot)
+        if (-not $normalizedVcpkgRoot.EndsWith("\")) {
+            $normalizedVcpkgRoot += "\"
+        }
+
+        $msbuildArgs += "/p:VcpkgRoot=$normalizedVcpkgRoot"
+    }
+
+    & $MSBuildPath @msbuildArgs
     if ($LASTEXITCODE -ne 0) {
         throw "Build failed for target: $Target"
     }
@@ -54,7 +75,15 @@ Write-Host "Platform: $Platform"
 
 if (-not $SkipBuild) {
     $msbuild = Resolve-MSBuildPath
+    $localVcpkgRoot = $null
+    if (Test-Path ".\vcpkg\vcpkg.exe") {
+        $localVcpkgRoot = (Resolve-Path ".\vcpkg").Path
+    }
+
     Write-Host "MSBuild: $msbuild"
+    if ($localVcpkgRoot) {
+        Write-Host "VcpkgRoot: $localVcpkgRoot"
+    }
 
     $targets = @(
         "YunoNetProtocol",
@@ -65,7 +94,7 @@ if (-not $SkipBuild) {
     )
 
     foreach ($target in $targets) {
-        Invoke-MSBuildTarget -MSBuildPath $msbuild -Target $target
+        Invoke-MSBuildTarget -MSBuildPath $msbuild -Target $target -VcpkgRoot $localVcpkgRoot
     }
 }
 else {

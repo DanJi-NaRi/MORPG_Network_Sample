@@ -136,6 +136,17 @@ void GameApp::OnUpdate(float dt)
     //m_gameManager->Tick(dt);
     m_clientNet.PumpIncoming(dt);
 
+    IRenderer* renderer = YunoEngine::GetRenderer();
+    IInput* input = YunoEngine::GetInput();
+    IWindow* window = YunoEngine::GetWindow();
+    ISceneManager* sm = YunoEngine::GetSceneManager();
+    IAudioManager* am = YunoEngine::GetAudioManager();
+
+    if (!renderer || !input || !window || !sm || !am)
+    {
+        return;
+    }
+
     if (m_clientNet.IsConnected() && !m_enterWorldRequested)
     {
         using namespace yuno::net;
@@ -186,12 +197,6 @@ void GameApp::OnUpdate(float dt)
     //
     //    test = 0.0f;
     //}
-    IRenderer* renderer = YunoEngine::GetRenderer();
-    IInput* input = YunoEngine::GetInput();
-    IWindow* window = YunoEngine::GetWindow();
-    ISceneManager* sm = YunoEngine::GetSceneManager();
-    IAudioManager* am = YunoEngine::GetAudioManager();
-
     if (input->IsKeyDown('I')) // ???뮞?紐꾩뒠 ??곴맒????ν뀧??
         window->SetClientSize(960, 540);
 

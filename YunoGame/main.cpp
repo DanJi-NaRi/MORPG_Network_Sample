@@ -19,8 +19,10 @@
 #include "S2C_AuthResult.h"
 
 #include <cstdlib>
+#include <cctype>
 #include <exception>
 #include <iostream>
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <windows.h>
@@ -65,6 +67,23 @@ namespace
         return fallback;
     }
 
+    bool ReadBoolEnv(const char* name)
+    {
+        std::string value = ReadEnvOrDefault(name, "");
+        std::transform(value.begin(), value.end(), value.begin(),
+            [](unsigned char ch)
+            {
+                return static_cast<char>(std::tolower(ch));
+            });
+
+        return value == "1" || value == "true" || value == "yes" || value == "on";
+    }
+
+    bool IsLoopbackHost(const std::string& host)
+    {
+        return host == "127.0.0.1" || host == "localhost" || host == "::1";
+    }
+
     bool PerformAuthRequest(
         const std::string& payloadA,
         const std::string& payloadB,
@@ -73,6 +92,14 @@ namespace
     {
         const std::string loginHost = ReadEnvOrDefault("YUNO_LOGIN_SERVER_HOST", "127.0.0.1");
         const std::uint16_t loginPort = ReadPortEnvOrDefault("YUNO_LOGIN_SERVER_PORT", 7000);
+        const bool allowInsecureRemoteLogin = ReadBoolEnv("YUNO_ALLOW_INSECURE_REMOTE_LOGIN");
+
+        if (!IsLoopbackHost(loginHost) && !allowInsecureRemoteLogin)
+        {
+            std::cout << u8"[보안 차단] 평문 인증은 로컬 로그인 서버에서만 허용됩니다. "
+                      << u8"원격 개발 테스트가 꼭 필요하면 YUNO_ALLOW_INSECURE_REMOTE_LOGIN=1 을 설정하세요.\n";
+            return false;
+        }
 
         boost::asio::io_context io;
         boost::asio::ip::tcp::resolver resolver(io);

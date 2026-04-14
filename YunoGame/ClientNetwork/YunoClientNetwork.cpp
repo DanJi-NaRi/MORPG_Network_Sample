@@ -57,6 +57,9 @@ namespace yuno::game
         if (m_running.exchange(true))
             return;
 
+        m_io.restart();
+        m_workGuard.emplace(boost::asio::make_work_guard(m_io));
+
         // Run network io_context on dedicated thread.
         m_netThread = std::thread(
             [this]()

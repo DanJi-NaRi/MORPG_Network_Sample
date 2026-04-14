@@ -270,3 +270,154 @@ Use one or more labels per issue:
 - Outcome: Added inbound packet-rate budgeting in TcpSession, added TcpServer session cap/options and targeted session disconnect API, and migrated YunoServerNetwork packet routing to PacketDispatcher with per-session packet budget enforcement.
 - Verification: Created and ran `scripts\test_transport_hardening.ps1`; PASS with log `Result\Log\20260409_204805_transport_hardening.log` and report `Result\Report\20260409_204805_transport_hardening_report.md`.
 - Learning: Explicit transport/server boundary rate-limits plus dispatcher-based routing reduced ad-hoc branching and made future protocol extension safer.
+
+## Entry: 2026-04-13 21:02 KST | Task: Daily Dev Branch Worklog Sync
+- Goal: Collect `Dev` commits since the last automation run, interpret diffs, and sync the daily worklog page without duplicate records.
+- Outcome: Confirmed there were no new `Dev` commits after `2026-04-13T11:29:29.062Z` and created the Notion page `2026-04-13 (월)` with explicit `없음` entries to preserve date continuity.
+- Verification: Ran `git -c safe.directory='C:/Users/user/.codex/worktrees/6bf5/MORPG_Network_Sample' log Dev --since='2026-04-13T11:29:29.062Z'` and verified Notion search had no existing `2026-04-13 (월)` page before creation.
+- Learning: For this automation, no-commit days should still be recorded explicitly, and Notion page creation should use `parent: { page_id: ... }` because connector validation rejects a plain string parent.
+
+## Entry: 2026-04-14 10:56 KST | Task: Add 95% Confidence Gate To AGENTS
+- Goal: Add a strict confidence-gate policy requested by user to `AGENTS.md`.
+- Outcome: Added two explicit policy lines under `## Do Not` to block changes before 95% confidence and require additional questions until confidence threshold is reached.
+- Verification: Updated `C:\Project\MORPG_Network_Sample\AGENTS.md` and confirmed the new lines are present in the `Do Not` section.
+- Learning: User-level operating constraints should be captured in `AGENTS.md` immediately to prevent future policy drift.
+
+## Entry: 2026-04-14 10:59 KST | Task: Rewrite Confidence Gate Lines In English
+- Goal: Convert the newly added confidence-gate policy lines in `AGENTS.md` from Korean to English.
+- Outcome: Replaced the two `Do Not` policy lines with English wording while keeping policy intent unchanged.
+- Verification: Confirmed both English lines in `C:\Project\MORPG_Network_Sample\AGENTS.md` under `## Do Not`.
+- Learning: For mixed-language policy files, direct line replacement with UTF-8 write avoids recurring display/encoding confusion.
+
+## Entry: 2026-04-14 11:04 KST | Task: Add Korean Interpretation File And Sync Policy
+- Goal: Create `Agents_kr.md` as a Korean interpretation of `AGENTS.md` and enforce synchronization between both files.
+- Outcome: Added `## Translation Sync Policy` to `AGENTS.md` and created `C:\Project\MORPG_Network_Sample\Agents_kr.md` with full Korean interpretation, including the same sync policy.
+- Verification: Confirmed new sync-policy section at the end of `AGENTS.md` and verified `Agents_kr.md` contains matching policy intent.
+- Learning: Explicit sync policy in the source document is more reliable than implicit convention for keeping bilingual policy files aligned.
+
+## Entry: 2026-04-14 11:12 KST | Task: Analyze Harness Documents
+- Goal: Identify which documents and scripts act as the current test harness for protocol work and summarize their roles.
+- Outcome: Confirmed the harness is organized as `docs/protocol-test-ops.md` plus executable PowerShell scripts under `scripts/`, with `test_<feature>.ps1` producing timestamped logs and Markdown reports in `Result/Log` and `Result/Report`.
+- Verification: Read `docs/agent-active-rules.md`, `docs/protocol-test-ops.md`, `docs/protocol-template.md`, `docs/protocol-style-guide.en.md`, `docs/protocol-style-guide.ko.md`, and representative scripts `scripts/build_and_test.ps1`, `scripts/smoke_world_enter.ps1`, `scripts/test_ping.ps1`, `scripts/test_transport_hardening.ps1`.
+- Learning: In this repository, "harness" is a workflow contract spanning documentation, script naming, artifact paths, and smoke/build chaining rather than a single standalone framework.
+
+## Entry: 2026-04-14 12:20 KST | Task: Rewrite AGENTS for OMX Team Workflow
+### Summary
+- Goal: Back up the existing `AGENTS.md`, move the workspace onto OMX guidance, and introduce a Korean interpretation file.
+- Outcome: Backed up `AGENTS.md`, rewrote the English guidance around OMX, and added `Agents_kr.md`; a follow-up review later found that some repository-specific protocol rules had been dropped and needed restoration.
+
+### What Went Well
+- Established the OMX operating model and skill-routing contract in the workspace policy.
+- Added a Korean interpretation file so the policy could be read in both languages.
+
+### Mistakes
+- Label: POLICY_GAP
+  Evidence: The initial rewrite removed repository-specific protocol verification and learning-loop requirements from the English source.
+  Root cause: The rewrite optimized for the shared OMX template but did not merge all local workflow constraints back in before completion.
+  Fix applied: Recorded the gap for follow-up and restored the missing local rules in a later corrective task.
+
+### Cost Signals
+- Commands run: 13
+- Build runs: 0
+- Test runs: 0
+- Avoidable retries: 0
+
+### Prevention Rules (Next Tasks)
+- Keep: When adopting a new workflow framework, diff the old policy against the new template before finalizing the rewrite.
+- Add: Treat repository-specific verification contracts as mandatory overlays on top of OMX defaults.
+- Remove: None
+
+### Confidence
+- Delivery confidence (0-100): 78
+- Verification depth: medium
+
+## Entry: 2026-04-14 12:38 KST | Task: Repair AGENTS Policy Drift After Code Review
+### Summary
+- Goal: Fix the review findings by restoring repository-specific AGENTS requirements, resynchronizing the Korean interpretation, and correcting the inaccurate improvement-log history.
+- Outcome: Re-added the protocol and learning-loop rules to `AGENTS.md`, synced `Agents_kr.md` with the missing references/confidence gate, and replaced the inaccurate mid-file worklog entry with corrected append-only history at the end of the log.
+
+### What Went Well
+- The code-review findings translated directly into a small corrective patch instead of another broad rewrite.
+- English and Korean policy files were updated together, which removed the previous sync drift.
+
+### Mistakes
+- Label: REVIEW_ESCAPE
+  Evidence: The earlier AGENTS rewrite landed without checking the English file against the repository-specific protocol contract.
+  Root cause: Post-rewrite validation focused on OMX structure and missed a direct old-vs-new requirements diff.
+  Fix applied: Restored the missing contract sections and tightened the worklog entry so it matches what actually happened.
+
+### Cost Signals
+- Commands run: 12
+- Build runs: 0
+- Test runs: 0
+- Avoidable retries: 1
+
+### Prevention Rules (Next Tasks)
+- Keep: Review policy rewrites against the previous version and the translated companion file before marking them done.
+- Add: If a worklog entry describes policy preservation, verify the exact clauses are still present in the source files.
+- Remove: None
+
+### Confidence
+- Delivery confidence (0-100): 95
+- Verification depth: high
+
+
+## Entry: 2026-04-14 14:20 KST | Task: Overall Project Code Review
+### Summary
+- Goal: Perform a repository-wide code review of the current workspace snapshot with evidence from core networking/auth/game modules and a verification build run.
+- Outcome: Identified high-risk disconnect lifecycle and credential-handling issues, plus build reproducibility and maintainability gaps across transport, auth, and game entry flows.
+
+### What Went Well
+- Reviewing the module boundaries first (Engine/Game/Protocol/Transport/Login/Server) made it easier to focus on the highest-risk integration seams.
+- A real build script run exposed an environment/reproducibility blocker instead of relying only on source inspection.
+
+### Mistakes
+- Label: TOOLING_ASSUMPTION
+  Evidence: `omx explore` was attempted first per session guidance, but the local harness was unavailable because `cargo`/prebuilt support was missing.
+  Root cause: I assumed the advisory explore surface was operational before checking the local install state.
+  Fix applied: Fell back immediately to direct repository inspection and command-line evidence gathering.
+
+### Cost Signals
+- Commands run: 24
+- Build runs: 1
+- Test runs: 0
+- Avoidable retries: 1
+
+### Prevention Rules (Next Tasks)
+- Keep: For broad reviews, inspect architecture first and then validate the top findings with exact file:line evidence.
+- Add: When OMX explore is unavailable, fall back immediately and record the reason instead of retrying repeatedly.
+- Remove: None
+
+### Confidence
+- Delivery confidence (0-100): 92
+- Verification depth: medium
+
+## Entry: 2026-04-14 15:00 KST | Task: Apply Code Review Fixes
+### Summary
+- Goal: Fix the highest-priority issues from the repository-wide review without broad unrelated refactors.
+- Outcome: Repaired the transport disconnect notification path, removed hardcoded DB credential fallbacks, added a safer local-only default for plaintext auth handshakes, made the client network restartable, hardened a GameApp null-dereference path, and repaired local vcpkg-backed build reproducibility.
+
+### What Went Well
+- The fixes stayed concentrated in transport/auth/bootstrap/build surfaces instead of spreading into the engine core.
+- Targeted MSBuild runs caught one restart-related compile issue and one Game post-build path issue before the final verification pass.
+
+### Mistakes
+- Label: RESTART_GUARD_TYPE
+  Evidence: Reassigning `executor_work_guard` directly in `YunoClientNetwork::Start()` failed to compile because the assignment operator is private.
+  Root cause: I optimized for the smallest code diff before checking the guard type’s assignment semantics.
+  Fix applied: Switched the member to `std::optional<executor_work_guard<...>>` so lifecycle reset/recreate is explicit and compile-safe.
+
+### Cost Signals
+- Commands run: 18
+- Build runs: 4
+- Test runs: 1
+- Avoidable retries: 1
+
+### Prevention Rules (Next Tasks)
+- Keep: After lifecycle fixes, run a targeted project build before the full script to catch type-level mistakes cheaply.
+- Add: For repo-local vcpkg setups, verify both compile-time include resolution and post-build asset copy paths.
+- Remove: None
+
+### Confidence
+- Delivery confidence (0-100): 95
+- Verification depth: high

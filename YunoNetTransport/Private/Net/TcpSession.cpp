@@ -14,13 +14,14 @@ namespace yuno::net
     {
     }
 
+    // 세션의 수신 루프 시작
     void TcpSession::Start()
     {
         boost::asio::dispatch(m_strand, [self = shared_from_this()]()
             {
-                self->RefreshLastRecvTime();
-                self->ArmIdleTimer();
-                self->ReadHeader();
+                self->RefreshLastRecvTime();    // 수신 타이머 초기화
+                self->ArmIdleTimer();           // 유휴 타이머 시작
+                self->ReadHeader();             // 첫 패킷 수신 대기 시작
             });
     }
 
@@ -28,14 +29,8 @@ namespace yuno::net
     {
         boost::asio::dispatch(m_strand, [self = shared_from_this()]()
             {
-                self->m_disconnectedNotified = true;
-                self->m_idleTimer.cancel();
-                self->m_writeQ.clear();
-                self->m_writeQueueBytes = 0;
-
-                boost::system::error_code ec;
-                self->m_socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-                self->m_socket.close(ec);
+                boost::system::error_code ec = boost::asio::error::operation_aborted;
+                self->NotifyDisconnected(ec);
             });
     }
 

@@ -134,9 +134,21 @@ namespace yuno::login
     {
         const std::string host = ReadEnvOrDefault("YUNO_DB_HOST", "127.0.0.1");
         const unsigned int port = ReadEnvPortOrDefault("YUNO_DB_PORT", 3306);
-        const std::string user = ReadEnvOrDefault("YUNO_DB_USER", "***REMOVED***");
-        const std::string password = ReadEnvOrDefault("YUNO_DB_PASS", "***REMOVED***");
+        const std::string user = ReadEnvValue("YUNO_DB_USER");
+        const std::string password = ReadEnvValue("YUNO_DB_PASS");
         const std::string database = ReadEnvOrDefault("YUNO_DB_NAME", "yuno_auth");
+
+        if (user.empty())
+        {
+            m_lastError = "Missing required environment variable: YUNO_DB_USER";
+            return false;
+        }
+
+        if (password.empty())
+        {
+            m_lastError = "Missing required environment variable: YUNO_DB_PASS";
+            return false;
+        }
 
         return Connect(host.c_str(), port, user.c_str(), password.c_str(), database.c_str());
     }

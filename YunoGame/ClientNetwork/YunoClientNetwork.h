@@ -4,6 +4,7 @@
 #include <boost/asio.hpp>
 #include <cstdint>
 #include <functional>
+#include <optional>
 
 #include "TcpClient.h"          // YunoNetTransport
 #include "PacketDispatcher.h"   // YunoNetProtocol
@@ -58,7 +59,7 @@ namespace yuno::game
     private:
         // --- Network thread members ---
         boost::asio::io_context m_io;
-        boost::asio::executor_work_guard<boost::asio::io_context::executor_type> m_workGuard;
+        std::optional<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> m_workGuard;
         std::thread m_netThread;
 
         yuno::net::TcpClient m_client;
