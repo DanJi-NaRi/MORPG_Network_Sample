@@ -272,8 +272,8 @@ if (Test-Path $buildScriptPath) {
         '-File', $buildScriptPath,
         '-Configuration', $Configuration,
         '-Platform', $Platform,
-        '-Targets'
-    ) + $serverBuildTargets
+        '-Targets', ($serverBuildTargets -join ',')
+    )
     $executedCommands.Add("powershell.exe $($buildArgs -join ' ')")
     Write-Log 'Running scoped server-side build_and_test.ps1 for MORPG runtime targets'
     $buildOutput = & powershell.exe @buildArgs 2>&1
@@ -336,6 +336,8 @@ else {
         -Passed $true `
         -Details 'Smoke execution was skipped explicitly.' `
         -Impact ''
+
+    $nextActions.Add('Run smoke_world_enter.ps1 with YUNO_DB_* configured to validate the login -> town prerequisite end-to-end.')
 }
 
 if ($failureReasons.Count -eq 0) {
