@@ -113,6 +113,8 @@ Write-Log 'Party/instance/combat/inventory verification started.'
 $packetTypePath = Join-Path $repoRoot 'YunoNetProtocol\Public\Net\PacketType.h'
 $serverNetworkPath = Join-Path $repoRoot 'YunoServer\ServerNetwork\YunoServerNetwork.cpp'
 $sqlInitPath = Join-Path $repoRoot 'YunoLoginServer\Sql\init_yuno_auth.sql'
+$gameplayRepositoryHeaderPath = Join-Path $repoRoot 'YunoServer\Gameplay\MySqlGameplayRepository.h'
+$gameplayRepositoryCppPath = Join-Path $repoRoot 'YunoServer\Gameplay\MySqlGameplayRepository.cpp'
 $protocolRoots = @(
     (Join-Path $repoRoot 'YunoNetProtocol'),
     (Join-Path $repoRoot 'YunoGameProtocol')
@@ -179,12 +181,28 @@ Add-CheckResult `
     -Details ($(if ($instanceProtocolFiles.Count -gt 0) { ($instanceProtocolFiles | ForEach-Object { $_.FullName.Replace($repoRoot + '\', '') }) -join '; ' } else { 'No instance/dungeon protocol packet/header files found.' })) `
     -Impact 'Add instance enter/result/state packet contracts before dungeon transfer verification can run.'
 
-$runtimeFiles = @(Find-MatchingFiles -Roots ($protocolRoots + $serverRoots) -Terms @('Party', 'Instance', 'Dungeon', 'Combat', 'Inventory'))
+$runtimeFiles = @(Find-MatchingFiles -Roots ($protocolRoots + $serverRoots) -Terms @('Party', 'Instance', 'Dungeon', 'Combat', 'Inventory', 'Repository'))
 $runtimeEvidence = @($runtimeFiles | ForEach-Object { $_.FullName.Replace($repoRoot + '\', '') })
 $partyRuntimePresent = @($runtimeEvidence | Where-Object { $_ -match 'Party' })
 $instanceRuntimePresent = @($runtimeEvidence | Where-Object { $_ -match 'Instance|Dungeon' })
 $combatRuntimePresent = @($runtimeEvidence | Where-Object { $_ -match 'Combat|SkillCast' })
 $inventoryRuntimePresent = @($runtimeEvidence | Where-Object { $_ -match 'Inventory|Repository' })
+$gameplayRepositoryPaths = @(
+    'YunoServer\Gameplay\MySqlGameplayRepository.h',
+    'YunoServer\Gameplay\MySqlGameplayRepository.cpp'
+)
+$gameplayRepositoryPresent = @($gameplayRepositoryPaths | Where-Object { Test-Path (Join-Path $repoRoot $_) })
+$gameplayRepositoryMethodMarkers = @(
+    'EnsureCharacterForUser',
+    'LoadInventory',
+    'GrantDemoDungeonReward'
+)
+$missingGameplayRepositoryMarkers = @()
+foreach ($marker in $gameplayRepositoryMethodMarkers) {
+    if ((-not (Test-FileContains -Path $gameplayRepositoryHeaderPath -Pattern $marker)) -and (-not (Test-FileContains -Path $gameplayRepositoryCppPath -Pattern $marker))) {
+        $missingGameplayRepositoryMarkers += $marker
+    }
+}
 
 Add-CheckResult `
     -Name 'Party runtime seam present' `
@@ -212,9 +230,21 @@ Add-CheckResult `
     -Impact 'Restore the inventory schema baseline before DB-backed persistence checks can run.'
 
 Add-CheckResult `
+    -Name 'Gameplay persistence repository present' `
+    -Passed ($gameplayRepositoryPresent.Count -eq $gameplayRepositoryPaths.Count) `
+    -Details ($(if ($gameplayRepositoryPresent.Count -eq $gameplayRepositoryPaths.Count) { $gameplayRepositoryPresent -join '; ' } else { 'Missing gameplay persistence repository file(s): ' + (($gameplayRepositoryPaths | Where-Object { -not (Test-Path (Join-Path $repoRoot $_)) }) -join ', ') })) `
+    -Impact 'Restore YunoServer gameplay persistence files before inventory/reward acceptance can be validated.'
+
+Add-CheckResult `
+    -Name 'Gameplay persistence methods declared' `
+    -Passed ($missingGameplayRepositoryMarkers.Count -eq 0) `
+    -Details ($(if ($missingGameplayRepositoryMarkers.Count -eq 0) { 'EnsureCharacterForUser, LoadInventory, and GrantDemoDungeonReward are declared in the gameplay repository seam.' } else { 'Missing gameplay repository markers: ' + ($missingGameplayRepositoryMarkers -join ', ') })) `
+    -Impact 'Add the character/inventory/reward repository contract before Scenario D persistence verification can pass.'
+
+Add-CheckResult `
     -Name 'Inventory/persistence runtime seam present' `
-    -Passed ($inventoryRuntimePresent.Count -gt 0) `
-    -Details ($(if ($inventoryRuntimePresent.Count -gt 0) { $inventoryRuntimePresent -join '; ' } else { 'No inventory/persistence runtime seam found beyond the SQL schema baseline.' })) `
+    -Passed (($inventoryRuntimePresent.Count -gt 0) -and ($gameplayRepositoryPresent.Count -eq $gameplayRepositoryPaths.Count) -and ($missingGameplayRepositoryMarkers.Count -eq 0)) `
+    -Details ($(if (($inventoryRuntimePresent.Count -gt 0) -and ($gameplayRepositoryPresent.Count -eq $gameplayRepositoryPaths.Count) -and ($missingGameplayRepositoryMarkers.Count -eq 0)) { $inventoryRuntimePresent -join '; ' } else { 'Inventory protocol files may exist, but the gameplay persistence seam is incomplete or missing required repository methods.' })) `
     -Impact 'Add repository/service code for gameplay persistence before Scenario D can pass.'
 
 $requiredScripts = @(
