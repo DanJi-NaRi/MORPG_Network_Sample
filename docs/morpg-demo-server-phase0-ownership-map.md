@@ -44,6 +44,24 @@ Lock the brownfield packet/runtime ownership before party, instance, combat, and
   - login token issue/revoke
   - password/token hash migration
 
+### Gameplay persistence seam
+- `YunoServer/Gameplay/MySqlGameplayRepository.h`
+- `YunoServer/Gameplay/MySqlGameplayRepository.cpp`
+- Current ownership:
+  - ensure demo character exists for authenticated user
+  - load inventory/gold for enter-world sync
+  - grant and persist dungeon reward/inventory result
+
+### Party / instance runtime seams
+- `YunoServer/Gameplay/PartyManager.h`
+- `YunoServer/Gameplay/PartyManager.cpp`
+- `YunoServer/Gameplay/InstanceManager.h`
+- `YunoServer/Gameplay/InstanceManager.cpp`
+- Current ownership:
+  - party creation/join/leave/disband state
+  - instance admission and participant membership
+  - encounter/combat state tracked outside `YunoServerNetwork`
+
 ### Demo/runtime harness
 - `YunoServer/main/main.cpp`
 - Current ownership:
