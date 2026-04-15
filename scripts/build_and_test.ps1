@@ -1,7 +1,8 @@
 param(
     [string]$Configuration = "Debug",
     [string]$Platform = "x64",
-    [switch]$SkipBuild
+    [switch]$SkipBuild,
+    [string[]]$Targets
 )
 
 $ErrorActionPreference = "Stop"
@@ -73,6 +74,30 @@ Write-Host "==> build_and_test.ps1 started"
 Write-Host "Configuration: $Configuration"
 Write-Host "Platform: $Platform"
 
+$defaultTargets = @(
+    "YunoNetProtocol",
+    "YunoGameProtocol",
+    "YunoLoginServer",
+    "YunoServer",
+    "YunoGame"
+)
+
+$targetsToBuild = @(
+    if ($Targets) {
+        foreach ($target in $Targets) {
+            if (-not [string]::IsNullOrWhiteSpace($target)) {
+                $target.Trim()
+            }
+        }
+    }
+)
+
+if ($targetsToBuild.Count -eq 0) {
+    $targetsToBuild = $defaultTargets
+}
+
+Write-Host "Targets: $($targetsToBuild -join ', ')"
+
 if (-not $SkipBuild) {
     $msbuild = Resolve-MSBuildPath
     $localVcpkgRoot = $null
@@ -85,15 +110,7 @@ if (-not $SkipBuild) {
         Write-Host "VcpkgRoot: $localVcpkgRoot"
     }
 
-    $targets = @(
-        "YunoNetProtocol",
-        "YunoGameProtocol",
-        "YunoLoginServer",
-        "YunoServer",
-        "YunoGame"
-    )
-
-    foreach ($target in $targets) {
+    foreach ($target in $targetsToBuild) {
         Invoke-MSBuildTarget -MSBuildPath $msbuild -Target $target -VcpkgRoot $localVcpkgRoot
     }
 }
