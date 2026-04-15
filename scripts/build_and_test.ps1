@@ -86,7 +86,11 @@ $targetsToBuild = @(
     if ($Targets) {
         foreach ($target in $Targets) {
             if (-not [string]::IsNullOrWhiteSpace($target)) {
-                $target.Trim()
+                foreach ($part in ($target -split ',')) {
+                    if (-not [string]::IsNullOrWhiteSpace($part)) {
+                        $part.Trim()
+                    }
+                }
             }
         }
     }
