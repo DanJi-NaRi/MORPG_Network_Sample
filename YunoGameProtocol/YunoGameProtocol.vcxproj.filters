@@ -42,6 +42,18 @@
     <ClInclude Include="Public\Net\MORPGPackets\C2S_AckSnapshot.h">
       <Filter>Public\Network\Packets</Filter>
     </ClInclude>
+    <ClInclude Include="Public\Net\MORPGPackets\PartyPackets.h">
+      <Filter>Public\Network\Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\Net\MORPGPackets\InstancePackets.h">
+      <Filter>Public\Network\Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\Net\MORPGPackets\CombatPackets.h">
+      <Filter>Public\Network\Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\Net\MORPGPackets\InventoryPackets.h">
+      <Filter>Public\Network\Packets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Private\Net\MORPGPackets\S2C_WorldSnapshot.cpp">
@@ -57,6 +69,18 @@
       <Filter>ProtocolPCH</Filter>
     </ClCompile>
     <ClCompile Include="Private\Net\MORPGPackets\C2S_AckSnapshot.cpp">
+      <Filter>Private\Network\Packets</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\Net\MORPGPackets\PartyPackets.cpp">
+      <Filter>Private\Network\Packets</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\Net\MORPGPackets\InstancePackets.cpp">
+      <Filter>Private\Network\Packets</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\Net\MORPGPackets\CombatPackets.cpp">
+      <Filter>Private\Network\Packets</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\Net\MORPGPackets\InventoryPackets.cpp">
       <Filter>Private\Network\Packets</Filter>
     </ClCompile>
   </ItemGroup>
