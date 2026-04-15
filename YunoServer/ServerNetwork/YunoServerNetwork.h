@@ -41,7 +41,7 @@ namespace yuno::server
         void Tick();
         void Stop();
 
-        std::shared_ptr<yuno::net::TcpSession> FindSession(std::uint64_t sessionId);
+        std::shared_ptr<yuno::net::TcpSession> FindSession(std::uint64_t sessionId) const;
         std::size_t GetSessionCount() const;
 
     private:
