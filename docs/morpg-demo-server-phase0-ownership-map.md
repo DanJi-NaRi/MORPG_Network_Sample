@@ -120,6 +120,10 @@ Lock the brownfield packet/runtime ownership before party, instance, combat, and
 ## Verification handoff notes
 - Scoped server/runtime build command for this slice:
   - `powershell -ExecutionPolicy Bypass -File .\scripts\build_and_test.ps1 -Targets YunoNetProtocol,YunoGameProtocol,YunoLoginServer,YunoServer`
+- Latest scoped verification artifact from head `80f580b` (2026-04-15):
+  - `Result/Report/20260415_165002_party_instance_combat_inventory_report.md`
+  - Generated via `powershell -ExecutionPolicy Bypass -File .\scripts\test_party_instance_combat_inventory.ps1 -SkipSmoke`
 - Environment-dependent smoke still requires `YUNO_DB_*` variables before `smoke_world_enter.ps1` or the full party/instance script can validate login -> town end-to-end.
+- This worker session currently has no `YUNO_DB_*` variables exported, so the latest acceptance run stayed on the scoped build + protocol/runtime artifact gate.
 - Current workspace-wide build blocker observed outside the assigned MORPG server slice:
   - `YunoEngine/Private/Renderer/YunoRenderer.h` cannot resolve `SpriteBatch.h` while building `YunoGame`.
