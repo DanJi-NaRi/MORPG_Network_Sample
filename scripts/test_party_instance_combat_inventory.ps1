@@ -234,6 +234,37 @@ Add-CheckResult `
     -Details ($(if ($missingScripts.Count -eq 0) { 'build_and_test, smoke_world_enter, and party-instance-combat-inventory scripts are present.' } else { 'Missing scripts: ' + ($missingScripts -join ', ') })) `
     -Impact 'Restore required script entry points before acceptance evidence can be generated.'
 
+$buildScriptPath = Join-Path $repoRoot 'scripts\build_and_test.ps1'
+$serverBuildTargets = @('YunoNetProtocol', 'YunoGameProtocol', 'YunoLoginServer', 'YunoServer')
+if (Test-Path $buildScriptPath) {
+    $buildArgs = @(
+        '-ExecutionPolicy', 'Bypass',
+        '-File', $buildScriptPath,
+        '-Configuration', $Configuration,
+        '-Platform', $Platform,
+        '-Targets'
+    ) + $serverBuildTargets
+    $executedCommands.Add("powershell.exe $($buildArgs -join ' ')")
+    Write-Log 'Running scoped server-side build_and_test.ps1 for MORPG runtime targets'
+    $buildOutput = & powershell.exe @buildArgs 2>&1
+    foreach ($line in $buildOutput) {
+        Write-Log ([string]$line)
+    }
+
+    Add-CheckResult `
+        -Name 'Scoped server-side build' `
+        -Passed ($LASTEXITCODE -eq 0) `
+        -Details ($(if ($LASTEXITCODE -eq 0) { 'build_and_test.ps1 passed for YunoNetProtocol, YunoGameProtocol, YunoLoginServer, and YunoServer.' } else { "Scoped build_and_test.ps1 failed with exit code $LASTEXITCODE." })) `
+        -Impact 'Fix scoped server/runtime build failures before relying on smoke or integration evidence for the MORPG slice.'
+}
+else {
+    Add-CheckResult `
+        -Name 'Scoped server-side build' `
+        -Passed $false `
+        -Details 'build_and_test.ps1 was not found, so the scoped MORPG server build could not be executed.' `
+        -Impact 'Restore scripts/build_and_test.ps1 before using this acceptance gate.'
+}
+
 if (-not $SkipSmoke) {
     $loginBinary = Resolve-BinaryPath -Name 'YunoLoginServer' -Configuration $Configuration -Platform $Platform
     $worldBinary = Resolve-BinaryPath -Name 'YunoServer' -Configuration $Configuration -Platform $Platform
