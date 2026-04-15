@@ -116,3 +116,10 @@ Lock the brownfield packet/runtime ownership before party, instance, combat, and
 2. Land server runtime seams next (`PartyManager`, `InstanceManager`, persistence repo).
 3. Land automation/reporting after the runtime contracts are stable.
 4. Keep `YunoServerNetwork` focused on routing and broadcast glue; do not move long-lived gameplay rules back into it.
+
+## Verification handoff notes
+- Scoped server/runtime build command for this slice:
+  - `powershell -ExecutionPolicy Bypass -File .\scripts\build_and_test.ps1 -Targets YunoNetProtocol,YunoGameProtocol,YunoLoginServer,YunoServer`
+- Environment-dependent smoke still requires `YUNO_DB_*` variables before `smoke_world_enter.ps1` or the full party/instance script can validate login -> town end-to-end.
+- Current workspace-wide build blocker observed outside the assigned MORPG server slice:
+  - `YunoEngine/Private/Renderer/YunoRenderer.h` cannot resolve `SpriteBatch.h` while building `YunoGame`.
