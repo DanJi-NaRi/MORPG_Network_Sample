@@ -164,7 +164,7 @@ namespace yuno::server
         m_snapshotAccumulatorSec = 0.0f;
     }
 
-    std::shared_ptr<yuno::net::TcpSession> YunoServerNetwork::FindSession(std::uint64_t sessionId)
+    std::shared_ptr<yuno::net::TcpSession> YunoServerNetwork::FindSession(std::uint64_t sessionId) const
     {
         return m_server.FindSession(sessionId);
     }
