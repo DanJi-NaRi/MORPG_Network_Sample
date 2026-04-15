@@ -152,12 +152,20 @@
     <ClInclude Include="Public\Net\MORPGPackets\C2S_EnterWorld.h" />
     <ClInclude Include="Public\Net\MORPGPackets\C2S_MoveInput.h" />
     <ClInclude Include="Public\Net\MORPGPackets\S2C_WorldSnapshot.h" />
+    <ClInclude Include="Public\Net\MORPGPackets\PartyPackets.h" />
+    <ClInclude Include="Public\Net\MORPGPackets\InstancePackets.h" />
+    <ClInclude Include="Public\Net\MORPGPackets\CombatPackets.h" />
+    <ClInclude Include="Public\Net\MORPGPackets\InventoryPackets.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Private\Net\MORPGPackets\C2S_AckSnapshot.cpp" />
     <ClCompile Include="Private\Net\MORPGPackets\C2S_EnterWorld.cpp" />
     <ClCompile Include="Private\Net\MORPGPackets\C2S_MoveInput.cpp" />
     <ClCompile Include="Private\Net\MORPGPackets\S2C_WorldSnapshot.cpp" />
+    <ClCompile Include="Private\Net\MORPGPackets\PartyPackets.cpp" />
+    <ClCompile Include="Private\Net\MORPGPackets\InstancePackets.cpp" />
+    <ClCompile Include="Private\Net\MORPGPackets\CombatPackets.cpp" />
+    <ClCompile Include="Private\Net\MORPGPackets\InventoryPackets.cpp" />
     <ClCompile Include="GameProtocolPCH\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

@@ -35,6 +35,10 @@ namespace yuno::net
         C2S_AckSnapshot = 18,
         C2S_AuthRegister = 19,
         C2S_AuthLogout = 20,
+        C2S_PartyCreate = 21,
+        C2S_PartyJoin = 22,
+        C2S_PartyLeave = 23,
+        C2S_InstanceEnter = 24,
 
         // S2C (legacy game-specific)
         S2C_EnterOK = 128,
@@ -57,6 +61,11 @@ namespace yuno::net
         S2C_DespawnEntity = 144,
         S2C_WorldSnapshot = 145,
         S2C_ServerEvent = 146,
+        S2C_PartyState = 147,
+        S2C_InstanceState = 148,
+        S2C_CombatEvent = 149,
+        S2C_InventoryState = 150,
+        S2C_InstanceResult = 151,
 
         // System / Error
         S2C_Error = 240,

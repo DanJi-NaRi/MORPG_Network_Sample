@@ -491,3 +491,33 @@ Use one or more labels per issue:
 ### Confidence
 - Delivery confidence (0-100): 95
 - Verification depth: medium
+
+## Entry: 2026-04-15 17:06 KST | Task: Cleanup Lore Commit History for MORPG Team Run
+### Summary
+- Goal: Replace OMX team operational checkpoint history with clean Lore-format commit history.
+- Outcome: Preserved a backup branch, audited the final tree against `origin/Network_Refactoring`, and prepared the branch for semantic recommit instead of keeping auto-checkpoint noise.
+
+### What Went Well
+- The team hygiene report and final task results made it clear which runtime commits were scaffolding versus real delivery content.
+- Verifying the final tree before rewriting reduced the risk of losing completed MORPG server-slice changes.
+
+### Mistakes
+- Label: RUNTIME_HISTORY_DRIFT
+  Evidence: The branch accumulated many `omx(team): auto-checkpoint ...` commits and repeated merge/cherry-pick scaffolding.
+  Root cause: Team execution completed without immediate leader-side history squashing.
+  Fix applied: Rebased the cleanup plan around a backup branch plus a semantic Lore recommit strategy.
+
+### Cost Signals
+- Commands run: 8
+- Build runs: 0
+- Test runs: 0
+- Avoidable retries: 1
+
+### Prevention Rules (Next Tasks)
+- Keep: Before finalizing a completed OMX team run, inspect the hygiene report and rewrite runtime scaffolding into semantic Lore commits immediately.
+- Add: When team output is done, prefer a single leader-side semantic recommit from the validated tree over preserving auto-checkpoint churn.
+- Remove: None
+
+### Confidence
+- Delivery confidence (0-100): 94
+- Verification depth: medium

@@ -7,6 +7,9 @@
     <Filter Include="ServerNetwork">
       <UniqueIdentifier>{6292b59c-ca1c-41a5-a493-3472fecd1064}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Gameplay">
+      <UniqueIdentifier>{b3d79227-a190-4a3b-8e43-f5b6050bb1ce}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main\main.cpp">
@@ -15,6 +18,15 @@
     <ClCompile Include="ServerNetwork\YunoServerNetwork.cpp">
       <Filter>ServerNetwork</Filter>
     </ClCompile>
+    <ClCompile Include="Gameplay\PartyManager.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="Gameplay\InstanceManager.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="Gameplay\MySqlGameplayRepository.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ServerNetwork\YunoServerNetwork.h">
@@ -22,6 +34,15 @@
     </ClInclude>
     <ClInclude Include="ServerNetwork\PlayerSpawnPointResolver.h">
       <Filter>ServerNetwork</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\PartyManager.h">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\InstanceManager.h">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\MySqlGameplayRepository.h">
+      <Filter>Gameplay</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
