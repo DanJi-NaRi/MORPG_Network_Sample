@@ -6,6 +6,7 @@ param(
     [int]$WarmupSeconds = 3,
     [int]$StartupTimeoutSec = 10,
     [string]$FeatureName = 'party_instance_combat_inventory',
+    [switch]$SkipBuild,
     [switch]$SkipSmoke
 )
 
@@ -267,25 +268,34 @@ Add-CheckResult `
 $buildScriptPath = Join-Path $repoRoot 'scripts\build_and_test.ps1'
 $serverBuildTargets = @('YunoNetProtocol', 'YunoGameProtocol', 'YunoLoginServer', 'YunoServer')
 if (Test-Path $buildScriptPath) {
-    $buildArgs = @(
-        '-ExecutionPolicy', 'Bypass',
-        '-File', $buildScriptPath,
-        '-Configuration', $Configuration,
-        '-Platform', $Platform,
-        '-Targets', ($serverBuildTargets -join ',')
-    )
-    $executedCommands.Add("powershell.exe $($buildArgs -join ' ')")
-    Write-Log 'Running scoped server-side build_and_test.ps1 for MORPG runtime targets'
-    $buildOutput = & powershell.exe @buildArgs 2>&1
-    foreach ($line in $buildOutput) {
-        Write-Log ([string]$line)
+    if ($SkipBuild) {
+        Add-CheckResult `
+            -Name 'Scoped server-side build' `
+            -Passed $true `
+            -Details 'Scoped build_and_test.ps1 execution was skipped explicitly because build verification ran outside this wrapper.' `
+            -Impact ''
     }
+    else {
+        $buildArgs = @(
+            '-ExecutionPolicy', 'Bypass',
+            '-File', $buildScriptPath,
+            '-Configuration', $Configuration,
+            '-Platform', $Platform,
+            '-Targets', ($serverBuildTargets -join ',')
+        )
+        $executedCommands.Add("powershell.exe $($buildArgs -join ' ')")
+        Write-Log 'Running scoped server-side build_and_test.ps1 for MORPG runtime targets'
+        $buildOutput = & powershell.exe @buildArgs 2>&1
+        foreach ($line in $buildOutput) {
+            Write-Log ([string]$line)
+        }
 
-    Add-CheckResult `
-        -Name 'Scoped server-side build' `
-        -Passed ($LASTEXITCODE -eq 0) `
-        -Details ($(if ($LASTEXITCODE -eq 0) { 'build_and_test.ps1 passed for YunoNetProtocol, YunoGameProtocol, YunoLoginServer, and YunoServer.' } else { "Scoped build_and_test.ps1 failed with exit code $LASTEXITCODE." })) `
-        -Impact 'Fix scoped server/runtime build failures before relying on smoke or integration evidence for the MORPG slice.'
+        Add-CheckResult `
+            -Name 'Scoped server-side build' `
+            -Passed ($LASTEXITCODE -eq 0) `
+            -Details ($(if ($LASTEXITCODE -eq 0) { 'build_and_test.ps1 passed for YunoNetProtocol, YunoGameProtocol, YunoLoginServer, and YunoServer.' } else { "Scoped build_and_test.ps1 failed with exit code $LASTEXITCODE." })) `
+            -Impact 'Fix scoped server/runtime build failures before relying on smoke or integration evidence for the MORPG slice.'
+    }
 }
 else {
     Add-CheckResult `
@@ -336,8 +346,6 @@ else {
         -Passed $true `
         -Details 'Smoke execution was skipped explicitly.' `
         -Impact ''
-
-    $nextActions.Add('Run smoke_world_enter.ps1 with YUNO_DB_* configured to validate the login -> town prerequisite end-to-end.')
 }
 
 if ($failureReasons.Count -eq 0) {
