@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 namespace yuno::net
@@ -35,6 +36,7 @@ namespace yuno::net::packets
         float x = 0.0f;
         float y = 0.0f;
         float z = 0.0f;
+        std::string displayName;
 
         void Serialize(ByteWriter& w) const;
         static S2C_SpawnEntity Deserialize(ByteReader& r);

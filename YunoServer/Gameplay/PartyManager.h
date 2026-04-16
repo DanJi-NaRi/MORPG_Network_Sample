@@ -24,6 +24,7 @@ namespace yuno::server
         const Party* FindPartyById(std::uint32_t partyId) const;
         const Party* FindPartyByMember(std::uint64_t sessionId) const;
         std::vector<std::uint64_t> GetPartyMembers(std::uint32_t partyId) const;
+        std::vector<Party> ListParties() const;
         void RemoveDisconnected(std::uint64_t sessionId);
 
     private:

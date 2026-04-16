@@ -77,6 +77,7 @@ namespace yuno::server
             std::uint32_t gold = 0;
             std::uint32_t partyId = 0;
             std::uint32_t instanceId = 0;
+            std::string displayName;
             SceneKind scene = SceneKind::Town;
             std::uint32_t sceneKey = 0;
             std::uint32_t lastAckedSnapshotId = 0;
@@ -101,12 +102,14 @@ namespace yuno::server
         void HandleAckSnapshot(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
         void HandlePing(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
         void HandlePartyCreate(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
+        void HandlePartyList(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
         void HandlePartyJoin(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
         void HandlePartyLeave(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
         void HandleInstanceEnter(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
         void HandleSkillCast(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
         void SendSpawnEntity(std::shared_ptr<yuno::net::TcpSession> session, const PlayerRuntimeState& player) const;
         void BroadcastWorldSnapshot();
+        void SendPartyList(std::shared_ptr<yuno::net::TcpSession> session) const;
         void SendPartyStateToParty(std::uint32_t partyId, yuno::net::packets::PartyResultCode resultCode);
         void SendPartyState(std::shared_ptr<yuno::net::TcpSession> session, const yuno::net::packets::S2C_PartyState& state) const;
         void SendInstanceStateToParticipants(const InstanceManager::Instance& instance, yuno::net::packets::InstanceResultCode resultCode);

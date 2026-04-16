@@ -23,6 +23,13 @@ namespace yuno::server
 {
     namespace
     {
+        std::string FallbackDisplayName(std::uint64_t userId)
+        {
+            std::ostringstream oss;
+            oss << "Demo" << userId;
+            return oss.str();
+        }
+
         std::string ReadEnvValue(const char* name)
         {
             if (!name || !(*name))
@@ -264,6 +271,11 @@ namespace yuno::server
         if (inserted || player.entityId == 0)
             player.entityId = m_nextEntityId++;
 
+        std::string displayName;
+        if (!m_gameplayRepository.LoadCharacterName(characterId, displayName))
+            displayName = FallbackDisplayName(userId);
+        player.displayName = std::move(displayName);
+
         const SpawnPoint spawnPoint = m_spawnPointResolver.Resolve(enterWorld.spawnRegionId);
         player.x = spawnPoint.x;
         player.y = spawnPoint.y;
@@ -297,6 +309,7 @@ namespace yuno::server
         spawn.x = player.x;
         spawn.y = player.y;
         spawn.z = player.z;
+        spawn.displayName = player.displayName;
 
         auto bytes = yuno::net::PacketBuilder::Build(
             yuno::net::PacketType::S2C_SpawnEntity,
@@ -471,6 +484,29 @@ namespace yuno::server
 
         playerIt->second.partyId = partyId;
         SendPartyStateToParty(partyId, yuno::net::packets::PartyResultCode::None);
+    }
+
+    void YunoServerNetwork::HandlePartyList(
+        std::shared_ptr<yuno::net::TcpSession> session,
+        const std::uint8_t* body,
+        std::uint32_t bodyLen)
+    {
+        if (!session || !body)
+            return;
+
+        try
+        {
+            yuno::net::ByteReader reader(body, bodyLen);
+            (void)yuno::net::packets::C2S_PartyList::Deserialize(reader);
+            if (reader.Remaining() != 0)
+                return;
+        }
+        catch (...)
+        {
+            return;
+        }
+
+        SendPartyList(session);
     }
 
     void YunoServerNetwork::HandlePartyJoin(
@@ -783,6 +819,7 @@ namespace yuno::server
             memberState.entityId = member.entityId;
             memberState.online = member.inWorld ? 1 : 0;
             memberState.alive = member.alive ? 1 : 0;
+            memberState.displayName = member.displayName;
             state.members.push_back(memberState);
         }
 
@@ -792,6 +829,42 @@ namespace yuno::server
             if (session)
                 SendPartyState(session, state);
         }
+    }
+
+    void YunoServerNetwork::SendPartyList(std::shared_ptr<yuno::net::TcpSession> session) const
+    {
+        if (!session)
+            return;
+
+        yuno::net::packets::S2C_PartyList list{};
+        const auto parties = m_partyManager.ListParties();
+        list.parties.reserve(parties.size());
+        for (const auto& party : parties)
+        {
+            if (party.members.empty())
+                continue;
+
+            yuno::net::packets::PartyListEntry entry{};
+            entry.partyId = party.partyId;
+            entry.memberCount = static_cast<std::uint16_t>(party.members.size());
+
+            auto leaderIt = m_players.find(party.leaderSessionId);
+            if (leaderIt != m_players.end())
+            {
+                entry.leaderEntityId = leaderIt->second.entityId;
+                entry.leaderName = leaderIt->second.displayName;
+            }
+
+            list.parties.push_back(std::move(entry));
+        }
+
+        auto bytes = yuno::net::PacketBuilder::Build(
+            yuno::net::PacketType::S2C_PartyList,
+            [&list](yuno::net::ByteWriter& w)
+            {
+                list.Serialize(w);
+            });
+        session->Send(std::move(bytes));
     }
 
     void YunoServerNetwork::SendPartyState(
@@ -1111,6 +1184,15 @@ namespace yuno::server
                 auto session = FindSession(peer.sId);
                 if (session)
                     HandlePartyCreate(std::move(session), body, bodyLen);
+            });
+
+        m_dispatcher.RegisterRaw(
+            yuno::net::PacketType::C2S_PartyList,
+            [this](const yuno::net::NetPeer& peer, const yuno::net::PacketHeader&, const std::uint8_t* body, std::uint32_t bodyLen)
+            {
+                auto session = FindSession(peer.sId);
+                if (session)
+                    HandlePartyList(std::move(session), body, bodyLen);
             });
 
         m_dispatcher.RegisterRaw(

@@ -7,9 +7,12 @@
 #include "PacketBuilder.h"
 #include "ByteIO.h"
 #include "C2S_AckSnapshot.h"
+#include "InstancePackets.h"
 #include "PacketType.h"
+#include "PartyPackets.h"
 #include "S2C_Pong.h"
 #include "S2C_WorldSnapshot.h"
+#include "../Game/PartyInstanceClientState.h"
 #include "WorldPlayerState.h"
 
 // Packet utilities
@@ -258,6 +261,69 @@ namespace yuno::game
 
                     std::cout << "[Client] pong rtt=" << rttMs << "ms"
                               << " reqTime=" << pong.reqTime << "\n";
+                }
+                catch (...)
+                {
+                }
+            });
+
+        Dispatcher().RegisterRaw(
+            PacketType::S2C_PartyState,
+            [](const NetPeer&, const PacketHeader&, const std::uint8_t* body, std::uint32_t bodyLen)
+            {
+                if (!body)
+                    return;
+
+                try
+                {
+                    ByteReader reader(body, bodyLen);
+                    const auto state = yuno::net::packets::S2C_PartyState::Deserialize(reader);
+                    if (reader.Remaining() != 0)
+                        return;
+
+                    yuno::game::PublishPartyState(state);
+                }
+                catch (...)
+                {
+                }
+            });
+
+        Dispatcher().RegisterRaw(
+            PacketType::S2C_PartyList,
+            [](const NetPeer&, const PacketHeader&, const std::uint8_t* body, std::uint32_t bodyLen)
+            {
+                if (!body)
+                    return;
+
+                try
+                {
+                    ByteReader reader(body, bodyLen);
+                    const auto list = yuno::net::packets::S2C_PartyList::Deserialize(reader);
+                    if (reader.Remaining() != 0)
+                        return;
+
+                    yuno::game::PublishPartyList(list);
+                }
+                catch (...)
+                {
+                }
+            });
+
+        Dispatcher().RegisterRaw(
+            PacketType::S2C_InstanceState,
+            [](const NetPeer&, const PacketHeader&, const std::uint8_t* body, std::uint32_t bodyLen)
+            {
+                if (!body)
+                    return;
+
+                try
+                {
+                    ByteReader reader(body, bodyLen);
+                    const auto state = yuno::net::packets::S2C_InstanceState::Deserialize(reader);
+                    if (reader.Remaining() != 0)
+                        return;
+
+                    yuno::game::PublishInstanceState(state);
                 }
                 catch (...)
                 {

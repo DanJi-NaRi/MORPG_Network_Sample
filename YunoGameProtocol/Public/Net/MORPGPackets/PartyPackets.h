@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 namespace yuno::net
@@ -26,6 +27,7 @@ namespace yuno::net::packets
         std::uint32_t entityId = 0;
         std::uint8_t online = 0;
         std::uint8_t alive = 0;
+        std::string displayName;
 
         void Serialize(ByteWriter& w) const;
         static PartyMemberState Deserialize(ByteReader& r);
@@ -51,6 +53,23 @@ namespace yuno::net::packets
         static C2S_PartyLeave Deserialize(ByteReader& r);
     };
 
+    struct C2S_PartyList final
+    {
+        void Serialize(ByteWriter& w) const;
+        static C2S_PartyList Deserialize(ByteReader& r);
+    };
+
+    struct PartyListEntry final
+    {
+        std::uint32_t partyId = 0;
+        std::uint32_t leaderEntityId = 0;
+        std::uint16_t memberCount = 0;
+        std::string leaderName;
+
+        void Serialize(ByteWriter& w) const;
+        static PartyListEntry Deserialize(ByteReader& r);
+    };
+
     struct S2C_PartyState final
     {
         PartyResultCode resultCode = PartyResultCode::None;
@@ -60,5 +79,13 @@ namespace yuno::net::packets
 
         void Serialize(ByteWriter& w) const;
         static S2C_PartyState Deserialize(ByteReader& r);
+    };
+
+    struct S2C_PartyList final
+    {
+        std::vector<PartyListEntry> parties;
+
+        void Serialize(ByteWriter& w) const;
+        static S2C_PartyList Deserialize(ByteReader& r);
     };
 }

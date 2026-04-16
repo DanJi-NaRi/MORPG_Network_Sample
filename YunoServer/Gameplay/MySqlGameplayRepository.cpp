@@ -304,6 +304,42 @@ namespace yuno::server
         return true;
     }
 
+    bool MySqlGameplayRepository::LoadCharacterName(std::uint32_t characterId, std::string& outName)
+    {
+        outName.clear();
+        if (!m_conn)
+        {
+            m_lastError = "DB is not connected.";
+            return false;
+        }
+
+        std::ostringstream oss;
+        oss << "SELECT name FROM characters WHERE character_id=" << characterId << " LIMIT 1";
+        if (mysql_query(m_conn, oss.str().c_str()) != 0)
+        {
+            m_lastError = mysql_error(m_conn);
+            DrainResults();
+            return false;
+        }
+
+        MYSQL_RES* result = mysql_store_result(m_conn);
+        if (!result)
+        {
+            m_lastError = mysql_error(m_conn);
+            DrainResults();
+            return false;
+        }
+
+        MYSQL_ROW row = mysql_fetch_row(result);
+        if (row && row[0])
+            outName = row[0];
+
+        mysql_free_result(result);
+        DrainResults();
+        m_lastError.clear();
+        return !outName.empty();
+    }
+
     bool MySqlGameplayRepository::EnsureRewardItem(std::uint32_t& outItemId, std::string& outItemCode)
     {
         outItemId = 0;

@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cstring>
+#include <limits>
+#include <stdexcept>
 
 #include "S2C_WorldSnapshot.h"
 #include "ByteIO.h"
@@ -27,6 +29,33 @@ namespace yuno::net::packets
             static_assert(sizeof(bits) == sizeof(v), "float/u32 size mismatch");
             std::memcpy(&v, &bits, sizeof(v));
             return v;
+        }
+
+        void WriteStringU16(ByteWriter& w, const std::string& value)
+        {
+            if (value.size() > static_cast<std::size_t>(std::numeric_limits<std::uint16_t>::max()))
+                throw std::runtime_error("S2C_SpawnEntity displayName too long");
+
+            w.WriteU16LE(static_cast<std::uint16_t>(value.size()));
+            for (char ch : value)
+            {
+                w.WriteU8(static_cast<std::uint8_t>(ch));
+            }
+        }
+
+        std::string ReadStringU16(ByteReader& r)
+        {
+            const std::uint16_t length = r.ReadU16LE();
+            if (!r.Has(length))
+                throw std::runtime_error("S2C_SpawnEntity invalid displayName length");
+
+            std::string out;
+            out.reserve(length);
+            for (std::uint16_t i = 0; i < length; ++i)
+            {
+                out.push_back(static_cast<char>(r.ReadU8()));
+            }
+            return out;
         }
     }
 
@@ -67,6 +96,7 @@ namespace yuno::net::packets
         WriteF32(w, x);
         WriteF32(w, y);
         WriteF32(w, z);
+        WriteStringU16(w, displayName);
     }
 
     S2C_SpawnEntity S2C_SpawnEntity::Deserialize(ByteReader& r)
@@ -77,6 +107,7 @@ namespace yuno::net::packets
         s.x = ReadF32(r);
         s.y = ReadF32(r);
         s.z = ReadF32(r);
+        s.displayName = ReadStringU16(r);
         return s;
     }
 

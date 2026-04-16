@@ -39,6 +39,7 @@ namespace yuno::net
         C2S_PartyJoin = 22,
         C2S_PartyLeave = 23,
         C2S_InstanceEnter = 24,
+        C2S_PartyList = 25,
 
         // S2C (legacy game-specific)
         S2C_EnterOK = 128,
@@ -66,6 +67,7 @@ namespace yuno::net
         S2C_CombatEvent = 149,
         S2C_InventoryState = 150,
         S2C_InstanceResult = 151,
+        S2C_PartyList = 152,
 
         // System / Error
         S2C_Error = 240,

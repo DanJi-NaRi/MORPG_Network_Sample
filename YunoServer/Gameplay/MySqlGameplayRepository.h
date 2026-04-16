@@ -40,6 +40,7 @@ namespace yuno::server
         bool IsConnected() const;
 
         bool EnsureCharacterForUser(std::uint64_t userId, std::uint32_t& outCharacterId);
+        bool LoadCharacterName(std::uint32_t characterId, std::string& outName);
         bool LoadInventory(std::uint32_t characterId, std::vector<PersistedInventoryItem>& outItems, std::uint32_t& outGold);
         bool GrantDemoDungeonReward(std::uint32_t characterId, RewardGrantResult& outResult);
 

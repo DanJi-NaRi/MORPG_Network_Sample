@@ -93,6 +93,25 @@ namespace yuno::server
         return party ? party->members : std::vector<std::uint64_t>{};
     }
 
+    std::vector<PartyManager::Party> PartyManager::ListParties() const
+    {
+        std::vector<Party> parties;
+        parties.reserve(m_parties.size());
+        for (const auto& [partyId, party] : m_parties)
+        {
+            (void)partyId;
+            parties.push_back(party);
+        }
+        std::sort(
+            parties.begin(),
+            parties.end(),
+            [](const Party& lhs, const Party& rhs)
+            {
+                return lhs.partyId < rhs.partyId;
+            });
+        return parties;
+    }
+
     void PartyManager::RemoveDisconnected(std::uint64_t sessionId)
     {
         (void)LeaveParty(sessionId, nullptr);

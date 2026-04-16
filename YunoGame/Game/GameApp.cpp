@@ -22,28 +22,27 @@
 #include "GameApp.h"
 
 #include "PacketBuilder.h"
+#include "PartyInstanceClientState.h"
 #include "WorldPlayerState.h"
 #include "utilityClass.h"
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
 #include <string>
-#include <physx/PxPhysicsAPI.h>
 
 // ???땅
 
 #include "C2S_Ping.h"
 #include "C2S_EnterWorld.h"
 #include "C2S_MoveInput.h"
+#include "PartyPackets.h"
+#include "InstancePackets.h"
 //#include "C2S_MatchEnter.h"
 //#include "C2S_MatchLeave.h"
 
 namespace
 {
     constexpr std::uint32_t kBlasterCharacterId = 1001;
-    constexpr float kMousePickMaxDistance = 10000.0f;
-    constexpr float kMousePickGroundHalfExtent = 4096.0f;
-    constexpr float kMousePickGroundHalfHeight = 0.1f;
 
     std::string ReadEnvOrDefault(const char* name, const char* fallback)
     {
@@ -127,6 +126,7 @@ bool GameApp::OnInit()
     //m_clientNet.Start("127.0.0.1", 9000);
 
    m_clientNet.RegisterMatchPacketHandler();
+   yuno::game::SetStatusText(L"Connected. Use UI buttons for party and instance actions.");
 
     return true;
 }
@@ -287,19 +287,6 @@ void GameApp::OnUpdate(float dt)
         const bool hasLocalPlayer = yuno::game::TryGetLocalPlayerEntityId(localEntityId);
         if (hasLocalPlayer)
         {
-            if (input->IsMouseButtonPressed(0))
-            {
-                float hitX = 0.0f;
-                float hitY = 0.0f;
-                float hitZ = 0.0f;
-                if (TryPickGroundPointFromMouse(hitX, hitY, hitZ))
-                {
-                    m_clickMoveActive = true;
-                    m_clickMoveTargetX = hitX;
-                    m_clickMoveTargetZ = hitZ;
-                }
-            }
-
             float moveX = 0.0f;
             float moveY = 0.0f;
 
@@ -311,16 +298,6 @@ void GameApp::OnUpdate(float dt)
                 moveY += 1.0f;
             if (input->IsKeyDown(VK_DOWN))
                 moveY -= 1.0f;
-
-            const bool hasManualMoveInput = (std::abs(moveX) > 0.001f || std::abs(moveY) > 0.001f);
-            if (hasManualMoveInput)
-            {
-                m_clickMoveActive = false;
-            }
-            else
-            {
-                ApplyClickMoveToInput(moveX, moveY);
-            }
 
             m_inputSendAccumulator += dt;
             while (m_inputSendAccumulator >= kInputSendIntervalSeconds)
@@ -352,9 +329,75 @@ void GameApp::OnUpdate(float dt)
         else
         {
             m_inputSendAccumulator = 0.0f;
-            m_clickMoveActive = false;
         }
 
+    }
+
+    const yuno::game::PendingCommands commands = yuno::game::ConsumePendingCommands();
+    if (m_clientNet.IsConnected())
+    {
+        using namespace yuno::net;
+
+        if (commands.createParty)
+        {
+            yuno::net::packets::C2S_PartyCreate packet{};
+            auto bytes = PacketBuilder::Build(
+                PacketType::C2S_PartyCreate,
+                [&packet](ByteWriter& w)
+                {
+                    packet.Serialize(w);
+                });
+            m_clientNet.SendPacket(std::move(bytes));
+        }
+
+        if (commands.refreshPartyList)
+        {
+            yuno::net::packets::C2S_PartyList packet{};
+            auto bytes = PacketBuilder::Build(
+                PacketType::C2S_PartyList,
+                [&packet](ByteWriter& w)
+                {
+                    packet.Serialize(w);
+                });
+            m_clientNet.SendPacket(std::move(bytes));
+        }
+
+        if (commands.joinPartyId != 0)
+        {
+            yuno::net::packets::C2S_PartyJoin packet{};
+            packet.partyId = commands.joinPartyId;
+            auto bytes = PacketBuilder::Build(
+                PacketType::C2S_PartyJoin,
+                [&packet](ByteWriter& w)
+                {
+                    packet.Serialize(w);
+                });
+            m_clientNet.SendPacket(std::move(bytes));
+        }
+
+        if (commands.leaveParty)
+        {
+            yuno::net::packets::C2S_PartyLeave packet{};
+            auto bytes = PacketBuilder::Build(
+                PacketType::C2S_PartyLeave,
+                [&packet](ByteWriter& w)
+                {
+                    packet.Serialize(w);
+                });
+            m_clientNet.SendPacket(std::move(bytes));
+        }
+
+        if (commands.enterInstance)
+        {
+            yuno::net::packets::C2S_InstanceEnter packet{};
+            auto bytes = PacketBuilder::Build(
+                PacketType::C2S_InstanceEnter,
+                [&packet](ByteWriter& w)
+                {
+                    packet.Serialize(w);
+                });
+            m_clientNet.SendPacket(std::move(bytes));
+        }
     }
 
     // audio-> StateCheck();
@@ -382,114 +425,6 @@ void GameApp::OnUpdate(float dt)
 
 
     am->Update(dt);
-}
-
-bool GameApp::TryPickGroundPointFromMouse(float& outX, float& outY, float& outZ) const
-{
-    IRenderer* renderer = YunoEngine::GetRenderer();
-    IInput* input = YunoEngine::GetInput();
-    IWindow* window = YunoEngine::GetWindow();
-    if (!renderer || !input || !window)
-        return false;
-
-    const float width = static_cast<float>(window->GetClientWidth());
-    const float height = static_cast<float>(window->GetClientHeight());
-    if (width <= 0.0f || height <= 0.0f)
-        return false;
-
-    YunoCamera& camera = renderer->GetCamera();
-    const float mouseX = input->GetMouseX();
-    const float mouseY = input->GetMouseY();
-
-    const float ndcX = (mouseX / width) * 2.0f - 1.0f;
-    const float ndcY = 1.0f - (mouseY / height) * 2.0f;
-
-    const DirectX::XMMATRIX view = camera.View();
-    const DirectX::XMMATRIX proj = camera.ProjPerspective();
-    const DirectX::XMMATRIX invViewProj = DirectX::XMMatrixInverse(nullptr, view * proj);
-
-    const DirectX::XMVECTOR nearPoint = DirectX::XMVector3TransformCoord(
-        DirectX::XMVectorSet(ndcX, ndcY, 0.0f, 1.0f),
-        invViewProj);
-    const DirectX::XMVECTOR farPoint = DirectX::XMVector3TransformCoord(
-        DirectX::XMVectorSet(ndcX, ndcY, 1.0f, 1.0f),
-        invViewProj);
-    const DirectX::XMVECTOR rayDirVec = DirectX::XMVector3Normalize(farPoint - nearPoint);
-
-    DirectX::XMFLOAT3 rayOriginFloat = camera.position;
-    DirectX::XMFLOAT3 rayDirFloat{};
-    DirectX::XMStoreFloat3(&rayDirFloat, rayDirVec);
-
-    const physx::PxVec3 rayOrigin(rayOriginFloat.x, rayOriginFloat.y, rayOriginFloat.z);
-    const physx::PxVec3 rayDir(rayDirFloat.x, rayDirFloat.y, rayDirFloat.z);
-    if (!rayDir.isFinite())
-        return false;
-
-    const physx::PxBoxGeometry groundGeometry(
-        kMousePickGroundHalfExtent,
-        kMousePickGroundHalfHeight,
-        kMousePickGroundHalfExtent);
-    const physx::PxTransform groundPose(physx::PxVec3(0.0f, -kMousePickGroundHalfHeight, 0.0f));
-
-    physx::PxRaycastHit hit{};
-    const physx::PxU32 hitCount = physx::PxGeometryQuery::raycast(
-        rayOrigin,
-        rayDir,
-        groundGeometry,
-        groundPose,
-        kMousePickMaxDistance,
-        physx::PxHitFlag::ePOSITION,
-        1,
-        &hit);
-
-    if (hitCount == 0)
-        return false;
-
-    outX = hit.position.x;
-    outY = hit.position.y;
-    outZ = hit.position.z;
-    return true;
-}
-
-void GameApp::ApplyClickMoveToInput(float& inOutMoveX, float& inOutMoveY)
-{
-    if (!m_clickMoveActive)
-        return;
-
-    float localX = 0.0f;
-    float localY = 0.0f;
-    float localZ = 0.0f;
-    if (!yuno::game::TryGetReconciledLocalPosition(localX, localY, localZ))
-        return;
-
-    const float deltaX = m_clickMoveTargetX - localX;
-    const float deltaZ = m_clickMoveTargetZ - localZ;
-    const float distanceSq = deltaX * deltaX + deltaZ * deltaZ;
-    const float stopDistanceSq = kClickMoveStopDistance * kClickMoveStopDistance;
-    if (distanceSq <= stopDistanceSq)
-    {
-        m_clickMoveActive = false;
-        inOutMoveX = 0.0f;
-        inOutMoveY = 0.0f;
-        return;
-    }
-
-    const float distance = std::sqrt(distanceSq);
-    if (distance <= 0.0001f)
-    {
-        m_clickMoveActive = false;
-        inOutMoveX = 0.0f;
-        inOutMoveY = 0.0f;
-        return;
-    }
-
-    inOutMoveX = deltaX / distance;
-    inOutMoveY = deltaZ / distance;
-
-    if (std::abs(deltaX) <= kClickMoveAxisDeadZone)
-        inOutMoveX = 0.0f;
-    if (std::abs(deltaZ) <= kClickMoveAxisDeadZone)
-        inOutMoveY = 0.0f;
 }
 
 void GameApp::OnFixedUpdate(float fixedDt)
