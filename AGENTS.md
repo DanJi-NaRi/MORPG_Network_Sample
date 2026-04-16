@@ -443,8 +443,6 @@ Run `omx setup` to install all components. Run `omx doctor` to verify installati
 - Before protocol-related work, read:
   - `C:\Project\MORPG_Network_Sample\docs\protocol-template.md`
   - `C:\Project\MORPG_Network_Sample\docs\protocol-style-guide.en.md`
-  - `C:\Project\MORPG_Network_Sample\docs\protocol-style-guide.ko.md`
-  - `C:\Project\MORPG_Network_Sample\docs\agent-active-rules.md`
   - `C:\Project\MORPG_Network_Sample\docs\protocol-test-ops.md`
 - Preserve the protocol file placement rules:
   - Add packet types in `C:\Project\MORPG_Network_Sample\YunoNetProtocol\Public\Net\PacketType.h`
@@ -455,17 +453,13 @@ Run `omx setup` to install all components. Run `omx doctor` to verify installati
 ## Protocol Test Automation Rule
 - When a protocol feature is requested, do these steps without waiting for a separate prompt:
 1. Create or update a protocol-specific test script under `C:\Project\MORPG_Network_Sample\scripts\` using `test_<protocol_or_feature>.ps1`
-2. Ensure these result directories exist:
-   - `C:\Project\MORPG_Network_Sample\Result\Log`
-   - `C:\Project\MORPG_Network_Sample\Result\Report`
-3. Run the required protocol verification commands:
+
+2. Run the required protocol verification commands:
    - `powershell -ExecutionPolicy Bypass -File .\scripts\build_and_test.ps1`
    - `powershell -ExecutionPolicy Bypass -File .\scripts\smoke_world_enter.ps1`
-4. Execute the protocol-specific test script after implementation
-5. Save execution logs to `C:\Project\MORPG_Network_Sample\Result\Log\<timestamp>_<protocol_or_feature>.log`
-6. Generate a Markdown report at `C:\Project\MORPG_Network_Sample\Result\Report\<timestamp>_<protocol_or_feature>_report.md`
-   - Log and report language policy: English by default
-7. Include these sections in the report:
+3. Execute the protocol-specific test script after implementation
+
+4. Include these sections in the report:
    - objective and expected behavior
    - executed commands
    - pass/fail result
@@ -476,11 +470,7 @@ Run `omx setup` to install all components. Run `omx doctor` to verify installati
 1. attempted command log
 2. blocker analysis report with concrete missing prerequisites
 
-## Agent Learning Loop Rule
-- Before every meaningful task, read `C:\Project\MORPG_Network_Sample\docs\agent-active-rules.md`.
-- Apply the active `Keep` and `Add` rules unless newer evidence supersedes them.
-- Read `docs\agent-improvement-loop.md` only when repeated failures, unclear root causes, or policy conflicts make the history relevant.
-- After every meaningful task, append one new entry to `C:\Project\MORPG_Network_Sample\docs\agent-improvement-loop.md`.
+
 
 ## Do Not
 - Do not make claims without evidence.
