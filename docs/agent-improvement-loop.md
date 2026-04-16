@@ -521,3 +521,33 @@ Use one or more labels per issue:
 ### Confidence
 - Delivery confidence (0-100): 94
 - Verification depth: medium
+
+## Entry: 2026-04-16 11:33 KST | Task: Verify MORPG Demo Server Acceptance Harness
+### Summary
+- Goal: Re-run the MORPG demo server verification flow and keep the protocol harness reusable when build/smoke prerequisites are executed separately.
+- Outcome: Added explicit skipped-prerequisite command notes to `scripts/test_party_instance_combat_inventory.ps1`, then passed the scoped build, world-enter smoke, and protocol acceptance verification from the repository root workspace.
+
+### What Went Well
+- The scoped server build plus smoke flow still works cleanly from the repo root, so the acceptance gate can be rerun without special leader-only paths.
+- The protocol report now records when build/smoke were intentionally verified outside the wrapper, which keeps the generated evidence self-explanatory.
+
+### Mistakes
+- Label: WRAPPER_EVIDENCE_GAP
+  Evidence: The first regenerated April 16 report listed only the ownership scan in `Executed Commands` when the wrapper was called with `-SkipBuild -SkipSmoke`.
+  Root cause: I assumed the PASS check text alone was enough context for separately executed prerequisites.
+  Fix applied: Recorded explicit skip reasons in the wrapper's executed-command list and regenerated the acceptance report.
+
+### Cost Signals
+- Commands run: 13
+- Build runs: 1
+- Test runs: 2
+- Avoidable retries: 1
+
+### Prevention Rules (Next Tasks)
+- Keep: When protocol prerequisites are run outside a wrapper script, make the generated report say so explicitly.
+- Add: Regenerate the protocol report after any evidence-formatting tweak so the committed artifact matches the latest harness behavior.
+- Remove: None
+
+### Confidence
+- Delivery confidence (0-100): 97
+- Verification depth: high

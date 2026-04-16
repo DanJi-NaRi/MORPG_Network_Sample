@@ -269,6 +269,7 @@ $buildScriptPath = Join-Path $repoRoot 'scripts\build_and_test.ps1'
 $serverBuildTargets = @('YunoNetProtocol', 'YunoGameProtocol', 'YunoLoginServer', 'YunoServer')
 if (Test-Path $buildScriptPath) {
     if ($SkipBuild) {
+        $executedCommands.Add('build_and_test.ps1 verification skipped inside wrapper because the caller ran the scoped build separately.')
         Add-CheckResult `
             -Name 'Scoped server-side build' `
             -Passed $true `
@@ -341,6 +342,7 @@ if (-not $SkipSmoke) {
     }
 }
 else {
+    $executedCommands.Add('smoke_world_enter.ps1 verification skipped inside wrapper because the caller ran the login-to-world smoke separately.')
     Add-CheckResult `
         -Name 'Prerequisite login-to-world smoke' `
         -Passed $true `
