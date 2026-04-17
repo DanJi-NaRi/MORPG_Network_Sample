@@ -39,6 +39,8 @@ Keep runtime marker contracts stable and non-destructive when overlays are appli
 <!-- OMX:GUIDANCE:OPERATING:START -->
 - Default to quality-first, intent-deepening responses; think one more step before replying or asking for clarification, and use as much detail as needed for a strong result without empty verbosity.
 - Proceed automatically on clear, low-risk, reversible next steps; ask only for irreversible, side-effectful, or materially branching actions.
+- Do not ask or instruct humans to perform ordinary non-destructive, reversible actions; execute those safe reversible OMX/runtime operations and ordinary commands yourself.
+- Treat OMX runtime manipulation, state transitions, and ordinary command execution as agent responsibilities when they are safe and reversible.
 - Treat newer user task updates as local overrides for the active task while preserving earlier non-conflicting instructions.
 - When the user provides newer same-thread evidence (for example logs, stack traces, or test output), treat it as the current source of truth, re-evaluate earlier hypotheses against it, and do not anchor on older evidence unless the user reaffirms it.
 - Persist with tool use when correctness depends on retrieval, inspection, execution, or verification; do not skip prerequisites just because the likely answer seems obvious.
@@ -431,55 +433,4 @@ Mode lifecycle requirements:
 
 ## Setup
 
-Run `omx setup` to install all components. Run `omx doctor` to verify installation.
-
-## Workspace-Specific Repository Rules
-- Preserve the existing project style and module structure unless a change is justified.
-- Avoid unnecessary rewrites of stable code or docs.
-- For bug fixes, record the reproduction condition, change scope, and verification method when possible.
-- If documentation and implementation diverge, update both and report the mismatch explicitly.
-
-## Required References For Protocol Tasks
-- Before protocol-related work, read:
-  - `C:\Project\MORPG_Network_Sample\docs\protocol-template.md`
-  - `C:\Project\MORPG_Network_Sample\docs\protocol-style-guide.en.md`
-  - `C:\Project\MORPG_Network_Sample\docs\protocol-test-ops.md`
-- Preserve the protocol file placement rules:
-  - Add packet types in `C:\Project\MORPG_Network_Sample\YunoNetProtocol\Public\Net\PacketType.h`
-  - Put `.h` files in `Public` and `.cpp` files in `Private`
-  - Use `C2SPackets`, `S2CPackets`, `ErrorPackets`, or another clearly justified dedicated folder
-- Do not declare a protocol feature complete until the required build, test, and smoke steps have been executed and reported.
-
-## Protocol Test Automation Rule
-- When a protocol feature is requested, do these steps without waiting for a separate prompt:
-1. Create or update a protocol-specific test script under `C:\Project\MORPG_Network_Sample\scripts\` using `test_<protocol_or_feature>.ps1`
-
-2. Run the required protocol verification commands:
-   - `powershell -ExecutionPolicy Bypass -File .\scripts\build_and_test.ps1`
-   - `powershell -ExecutionPolicy Bypass -File .\scripts\smoke_world_enter.ps1`
-3. Execute the protocol-specific test script after implementation
-
-4. Include these sections in the report:
-   - objective and expected behavior
-   - executed commands
-   - pass/fail result
-   - key log evidence
-   - root cause for failures
-   - next actions
-- If runtime constraints block execution, still generate:
-1. attempted command log
-2. blocker analysis report with concrete missing prerequisites
-
-
-
-## Do Not
-- Do not make claims without evidence.
-- Do not provide a single solution without alternatives.
-- Do not declare completion without verification.
-- Do not make broad or risky changes before the plan, constraints, and acceptance criteria are clear.
-- Do not proceed on ambiguous high-impact changes below 95% confidence; raise confidence through inspection or clarifying questions first.
-
-## Translation Sync Policy
-- `Agents_kr.md` is the Korean interpretation of this file.
-- Keep `AGENTS.md` and `Agents_kr.md` synchronized within the same task whenever either file changes.
-- If the two files diverge, report the mismatch explicitly and treat the work as incomplete until they are reconciled.
+Execute `omx setup` to install all components. Execute `omx doctor` to verify installation.

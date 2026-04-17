@@ -44,14 +44,15 @@ bool Text::Submit(float dTime)
 {
     if (m_pRenderer && !m_desc.text.empty())
     {
-        XMFLOAT2 drawPos = XMFLOAT2(m_finalPos.x, m_finalPos.y);
+        const XMFLOAT3 resolvedLocalPos = ResolveLocalTranslation();
+        XMFLOAT2 drawPos = XMFLOAT2(resolvedLocalPos.x, resolvedLocalPos.y);
         XMFLOAT2 drawScale = XMFLOAT2(m_finalScale.x, m_finalScale.y);
         float drawRot = m_vRot.z;
 
         if (m_Parent)
         {
             const XMMATRIX parentWorld = m_Parent->GetWorldNoSizeMatrix();
-            const XMVECTOR localPos = XMVectorSet(m_finalPos.x, m_finalPos.y, m_finalPos.z, 1.0f);
+            const XMVECTOR localPos = XMVectorSet(resolvedLocalPos.x, resolvedLocalPos.y, resolvedLocalPos.z, 1.0f);
             const XMVECTOR worldPos = XMVector3TransformCoord(localPos, parentWorld);
 
             drawPos.x = XMVectorGetX(worldPos);

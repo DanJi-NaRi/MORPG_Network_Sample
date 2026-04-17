@@ -306,6 +306,29 @@ void Widget::SetRot(XMFLOAT3 vRot)   // vRot: degree
     m_transformDirty = true;
 }
 
+Float2 Widget::ResolveParentAnchorOffset() const
+{
+    if (!m_Parent)
+        return Float2(0.0f, 0.0f);
+
+    const Float2 anchor = PivotFromUIDirection(m_anchor);
+    const Float2 parentPivot = m_Parent->GetPivot();
+    const Float2 parentSize = m_Parent->GetSize();
+
+    return Float2(
+        (anchor.x - parentPivot.x) * parentSize.x,
+        (anchor.y - parentPivot.y) * parentSize.y);
+}
+
+XMFLOAT3 Widget::ResolveLocalTranslation() const
+{
+    const Float2 anchorOffset = ResolveParentAnchorOffset();
+    return XMFLOAT3(
+        m_finalPos.x + anchorOffset.x,
+        m_finalPos.y + anchorOffset.y,
+        m_finalPos.z);
+}
+
 bool Widget::UpdateTransform(float dTime)
 {
     // DX 의 레스터라이즈 규칙에 따른 2D 픽셀좌표 보정.
@@ -313,15 +336,14 @@ bool Widget::UpdateTransform(float dTime)
 
     /*m_clientSize = Float2((float)YunoEngine::GetWindow()->GetClientWidth(),
                          (float)YunoEngine::GetWindow()->GetClientHeight());*/
-    
-    if (m_useAspectComp) { // 화면비 스케일 사용 (기본값)
-        
+
+    const bool isRootWidget = (m_Parent == nullptr);
+    const bool shouldApplyAspectComp = m_useAspectComp && isRootWidget;
+
+    if (shouldApplyAspectComp) { // 화면비 스케일 사용 (루트 전용)
+
         Float2 origin = g_DefaultClientXY;          // 기준(디자인) 해상도
-
-
         Float2 canvas = m_uiFactory.GetCanvasSize();// 현재 클라이언트/캔버스
-
-        const bool applyLetterboxOffset = (m_Parent == nullptr);
 
         // origin/canvas 0 방어 (초기화/리사이즈 순간 등)
         if (origin.x <= 0.0f || origin.y <= 0.0f || canvas.x <= 0.0f || canvas.y <= 0.0f)
@@ -349,9 +371,7 @@ bool Widget::UpdateTransform(float dTime)
                 (canvas.y - fitted.y) * 0.5f);
 
             m_canvasScale = Float2(s, s);
-
-            //m_canvasLetterboxOffset = letterboxOffset; // 이동
-            m_canvasLetterboxOffset = applyLetterboxOffset ? letterboxOffset : Float2(0.0f, 0.0f); 
+            m_canvasLetterboxOffset = letterboxOffset;
 
             m_finalScale.x = m_vScale.x * m_canvasScale.x;
             m_finalScale.y = m_vScale.y * m_canvasScale.y;
@@ -362,27 +382,26 @@ bool Widget::UpdateTransform(float dTime)
             m_finalPos.z = m_vPos.z;
         }
     }
-    else { // 화면비 스케일 사용 X
+    else { // 화면비 스케일 사용 X 또는 자식 로컬 좌표
+        m_canvasScale = Float2(1.0f, 1.0f);
+        m_canvasLetterboxOffset = Float2(0.0f, 0.0f);
         m_finalPos = Float3(m_vPos.x, m_vPos.y, m_vPos.z);
         m_finalScale = Float3(m_vScale.x, m_vScale.y, 1.0f);
-        
+
         // 보정 (의도에 따라..)
         m_finalPos.z = 0.0f;
-        //m_finalScale.z = 1.0f;
     }
 
+    const XMFLOAT3 resolvedLocalPos = ResolveLocalTranslation();
 
     XMMATRIX mPivot = XMMatrixTranslation(-m_pivot.x, -m_pivot.y, 0.0f); // 피벗
     XMMATRIX mSize = XMMatrixScaling(m_size.x, m_size.y, 1.0f);
     XMMATRIX mScale = XMMatrixScaling(m_finalScale.x, m_finalScale.y, 1.0f); // 실제 크기가 아님. m_size 적용이 안된 순수 scale. 사용에 주의.
     XMMATRIX mRot   = XMMatrixRotationRollPitchYaw(m_vRot.x, m_vRot.y, m_vRot.z);
-    XMMATRIX mTrans = XMMatrixTranslation(m_finalPos.x, m_finalPos.y, m_finalPos.z); // 스크린 좌표 - 픽셀 기준(z는 사용 안함)
-    
-
+    XMMATRIX mTrans = XMMatrixTranslation(resolvedLocalPos.x, resolvedLocalPos.y, resolvedLocalPos.z); // 스크린 좌표 - 픽셀 기준(z는 사용 안함)
 
     XMMATRIX mLocalWithSize = mPivot * mSize * mScale * mRot * mTrans;  // size 포함
     XMMATRIX mLocalNoSize = mPivot * mScale * mRot * mTrans;            // size 제외 (하지만 uiScale 포함)
-
 
     // 자식은 size 미적용 부모 곱을 가져옴
     XMMATRIX parentNoSize = XMMatrixIdentity();
@@ -528,7 +547,7 @@ void Widget::UpdateRect()
     }
 
     // 루트이면서 회전도 없으면: 빠른 버전 허용
-    if (fabsf(m_vRot.z) <= 0.00001f)
+    if (m_Parent == nullptr && fabsf(m_vRot.z) <= 0.00001f)
     {
         const float w = m_size.x * m_finalScale.x;
         const float h = m_size.y * m_finalScale.y;
@@ -547,6 +566,8 @@ void Widget::UpdateRect()
         };
         return;
     }
+
+    UpdateRectWorld();
 }
 
 void Widget::UpdateRectWorld()

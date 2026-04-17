@@ -286,6 +286,7 @@ namespace yuno::server
         SendSpawnEntity(session, player);
         SendInventoryState(player);
         BroadcastWorldSnapshot();
+        RefreshPartyUiStateForAll();
 
         std::cout << "[Server] enter-world accepted sid=" << sid
                   << " userId=" << player.userId
@@ -466,9 +467,8 @@ namespace yuno::server
         auto playerIt = m_players.find(sid);
         if (playerIt == m_players.end() || !playerIt->second.inWorld)
         {
-            yuno::net::packets::S2C_PartyState state{};
-            state.resultCode = yuno::net::packets::PartyResultCode::NotInWorld;
-            SendPartyState(session, state);
+            SendPartyState(session, yuno::net::packets::S2C_PartyState{ yuno::net::packets::PartyResultCode::NotInWorld });
+            SendPartySocialState(session, yuno::net::packets::PartyResultCode::NotInWorld);
             return;
         }
 
@@ -479,11 +479,14 @@ namespace yuno::server
             yuno::net::packets::S2C_PartyState state{};
             state.resultCode = code;
             SendPartyState(session, state);
+            SendPartySocialState(session, code);
             return;
         }
 
         playerIt->second.partyId = partyId;
         SendPartyStateToParty(partyId, yuno::net::packets::PartyResultCode::None);
+        SendPartySocialState(session, yuno::net::packets::PartyResultCode::None, "Party created.");
+        RefreshPartyUiStateForAll();
     }
 
     void YunoServerNetwork::HandlePartyList(
@@ -534,24 +537,197 @@ namespace yuno::server
         auto playerIt = m_players.find(sid);
         if (playerIt == m_players.end() || !playerIt->second.inWorld)
         {
-            yuno::net::packets::S2C_PartyState state{};
-            state.resultCode = yuno::net::packets::PartyResultCode::NotInWorld;
-            SendPartyState(session, state);
+            SendPartySocialState(session, yuno::net::packets::PartyResultCode::NotInWorld);
             return;
         }
 
-        const auto code = m_partyManager.JoinParty(sid, join.partyId);
-        if (code != yuno::net::packets::PartyResultCode::None)
+        const auto code = m_partyManager.RequestJoin(sid, join.partyId);
+        SendPartySocialState(session, code, code == yuno::net::packets::PartyResultCode::None ? "Join request sent." : std::string());
+
+        if (code == yuno::net::packets::PartyResultCode::None)
         {
-            yuno::net::packets::S2C_PartyState state{};
-            state.resultCode = code;
-            state.partyId = join.partyId;
-            SendPartyState(session, state);
+            const PartyManager::Party* party = m_partyManager.FindPartyById(join.partyId);
+            if (party)
+                SendPartySocialStateToSession(party->leaderSessionId, yuno::net::packets::PartyResultCode::None, "A new join request arrived.");
+            RefreshPartyUiStateForAll();
+        }
+    }
+
+    void YunoServerNetwork::HandlePartyInvitePlayer(
+        std::shared_ptr<yuno::net::TcpSession> session,
+        const std::uint8_t* body,
+        std::uint32_t bodyLen)
+    {
+        if (!session || !body)
+            return;
+
+        yuno::net::packets::C2S_PartyInvitePlayer packet{};
+        try
+        {
+            yuno::net::ByteReader reader(body, bodyLen);
+            packet = yuno::net::packets::C2S_PartyInvitePlayer::Deserialize(reader);
+            if (reader.Remaining() != 0)
+                return;
+        }
+        catch (...)
+        {
             return;
         }
 
-        playerIt->second.partyId = join.partyId;
-        SendPartyStateToParty(join.partyId, yuno::net::packets::PartyResultCode::None);
+        const std::uint64_t sid = session->GetSessionId();
+        auto playerIt = m_players.find(sid);
+        if (playerIt == m_players.end() || !playerIt->second.inWorld)
+        {
+            SendPartySocialState(session, yuno::net::packets::PartyResultCode::NotInWorld);
+            return;
+        }
+
+        const std::uint64_t targetSid = FindSessionIdByEntityId(packet.targetEntityId);
+        if (targetSid == 0)
+        {
+            SendPartySocialState(session, yuno::net::packets::PartyResultCode::TargetNotFound);
+            return;
+        }
+
+        const auto code = m_partyManager.InvitePlayer(sid, targetSid);
+        SendPartySocialState(session, code, code == yuno::net::packets::PartyResultCode::None ? "Party invite sent." : std::string());
+        if (code == yuno::net::packets::PartyResultCode::None)
+        {
+            SendPartySocialStateToSession(targetSid, yuno::net::packets::PartyResultCode::None, "You received a party invite.");
+            RefreshPartyUiStateForAll();
+        }
+    }
+
+    void YunoServerNetwork::HandlePartyRespondJoinRequest(
+        std::shared_ptr<yuno::net::TcpSession> session,
+        const std::uint8_t* body,
+        std::uint32_t bodyLen)
+    {
+        if (!session || !body)
+            return;
+
+        yuno::net::packets::C2S_PartyRespondJoinRequest packet{};
+        try
+        {
+            yuno::net::ByteReader reader(body, bodyLen);
+            packet = yuno::net::packets::C2S_PartyRespondJoinRequest::Deserialize(reader);
+            if (reader.Remaining() != 0)
+                return;
+        }
+        catch (...)
+        {
+            return;
+        }
+
+        const std::uint64_t sid = session->GetSessionId();
+        const std::uint64_t applicantSid = FindSessionIdByEntityId(packet.applicantEntityId);
+        if (applicantSid == 0)
+        {
+            SendPartySocialState(session, yuno::net::packets::PartyResultCode::TargetNotFound);
+            return;
+        }
+
+        std::uint32_t partyId = 0;
+        const bool accept = packet.accept != 0;
+        const auto code = m_partyManager.RespondToJoinRequest(sid, applicantSid, accept, partyId);
+        SendPartySocialState(
+            session,
+            code,
+            code == yuno::net::packets::PartyResultCode::None ? (accept ? "Join request accepted." : "Join request rejected.") : std::string());
+
+        if (code != yuno::net::packets::PartyResultCode::None)
+            return;
+
+        if (accept)
+        {
+            auto playerIt = m_players.find(applicantSid);
+            if (playerIt != m_players.end())
+                playerIt->second.partyId = partyId;
+
+            SendPartyStateToParty(partyId, yuno::net::packets::PartyResultCode::None);
+            SendPartySocialStateToSession(applicantSid, yuno::net::packets::PartyResultCode::None, "Your join request was accepted.");
+        }
+        else
+        {
+            SendPartySocialStateToSession(applicantSid, yuno::net::packets::PartyResultCode::None, "Your join request was rejected.");
+        }
+
+        RefreshPartyUiStateForAll();
+    }
+
+    void YunoServerNetwork::HandlePartyRespondInvite(
+        std::shared_ptr<yuno::net::TcpSession> session,
+        const std::uint8_t* body,
+        std::uint32_t bodyLen)
+    {
+        if (!session || !body)
+            return;
+
+        yuno::net::packets::C2S_PartyRespondInvite packet{};
+        try
+        {
+            yuno::net::ByteReader reader(body, bodyLen);
+            packet = yuno::net::packets::C2S_PartyRespondInvite::Deserialize(reader);
+            if (reader.Remaining() != 0)
+                return;
+        }
+        catch (...)
+        {
+            return;
+        }
+
+        const std::uint64_t sid = session->GetSessionId();
+        std::uint32_t joinedPartyId = 0;
+        const bool accept = packet.accept != 0;
+        const auto code = m_partyManager.RespondToInvite(sid, packet.partyId, accept, joinedPartyId);
+        SendPartySocialState(
+            session,
+            code,
+            code == yuno::net::packets::PartyResultCode::None ? (accept ? "Party invite accepted." : "Party invite rejected.") : std::string());
+        if (code != yuno::net::packets::PartyResultCode::None)
+            return;
+
+        const PartyManager::Party* party = m_partyManager.FindPartyById(packet.partyId);
+        const std::uint64_t leaderSid = party ? party->leaderSessionId : 0;
+
+        if (accept)
+        {
+            auto playerIt = m_players.find(sid);
+            if (playerIt != m_players.end())
+                playerIt->second.partyId = joinedPartyId;
+            SendPartyStateToParty(joinedPartyId, yuno::net::packets::PartyResultCode::None);
+            if (leaderSid != 0)
+                SendPartySocialStateToSession(leaderSid, yuno::net::packets::PartyResultCode::None, "An invite was accepted.");
+        }
+        else if (leaderSid != 0)
+        {
+            SendPartySocialStateToSession(leaderSid, yuno::net::packets::PartyResultCode::None, "An invite was rejected.");
+        }
+
+        RefreshPartyUiStateForAll();
+    }
+
+    void YunoServerNetwork::HandlePartyBrowsePlayers(
+        std::shared_ptr<yuno::net::TcpSession> session,
+        const std::uint8_t* body,
+        std::uint32_t bodyLen)
+    {
+        if (!session || !body)
+            return;
+
+        try
+        {
+            yuno::net::ByteReader reader(body, bodyLen);
+            (void)yuno::net::packets::C2S_PartyBrowsePlayers::Deserialize(reader);
+            if (reader.Remaining() != 0)
+                return;
+        }
+        catch (...)
+        {
+            return;
+        }
+
+        SendPartySocialState(session, yuno::net::packets::PartyResultCode::None);
     }
 
     void YunoServerNetwork::HandlePartyLeave(
@@ -586,9 +762,15 @@ namespace yuno::server
         yuno::net::packets::S2C_PartyState selfState{};
         selfState.resultCode = code;
         SendPartyState(session, selfState);
+        SendPartySocialState(session, yuno::net::packets::PartyResultCode::None, "Left party.");
 
         if (oldPartyId != 0)
+        {
             SendPartyStateToParty(oldPartyId, yuno::net::packets::PartyResultCode::None);
+        }
+
+        if (code == yuno::net::packets::PartyResultCode::None)
+            RefreshPartyUiStateForAll();
     }
 
     std::vector<InstanceManager::ParticipantSeed> YunoServerNetwork::BuildParticipantSeeds(const PartyManager::Party& party) const
@@ -883,6 +1065,124 @@ namespace yuno::server
         session->Send(std::move(bytes));
     }
 
+    std::uint64_t YunoServerNetwork::FindSessionIdByEntityId(std::uint32_t entityId) const
+    {
+        if (entityId == 0)
+            return 0;
+
+        for (const auto& [sessionId, player] : m_players)
+        {
+            if (player.entityId == entityId && player.inWorld)
+                return sessionId;
+        }
+        return 0;
+    }
+
+    void YunoServerNetwork::SendPartySocialState(
+        std::shared_ptr<yuno::net::TcpSession> session,
+        yuno::net::packets::PartyResultCode resultCode,
+        const std::string& statusText) const
+    {
+        if (!session)
+            return;
+
+        const std::uint64_t sid = session->GetSessionId();
+        auto selfIt = m_players.find(sid);
+        if (selfIt == m_players.end())
+            return;
+
+        const PlayerRuntimeState& self = selfIt->second;
+        yuno::net::packets::S2C_PartySocialState state{};
+        state.resultCode = resultCode;
+        state.statusText = statusText;
+
+        for (const auto& [otherSid, candidate] : m_players)
+        {
+            if (otherSid == sid)
+                continue;
+            if (!candidate.inWorld || candidate.entityId == 0)
+                continue;
+            if (candidate.partyId != 0)
+                continue;
+
+            yuno::net::packets::ConnectedPlayerState player{};
+            player.entityId = candidate.entityId;
+            player.displayName = candidate.displayName;
+            state.connectedPlayers.push_back(std::move(player));
+        }
+
+        if (self.partyId != 0)
+        {
+            const PartyManager::Party* party = m_partyManager.FindPartyById(self.partyId);
+            const bool isLeader = party && party->leaderSessionId == sid;
+            if (isLeader)
+            {
+                for (const std::uint64_t requesterSid : m_partyManager.GetPendingJoinRequests(self.partyId))
+                {
+                    auto requesterIt = m_players.find(requesterSid);
+                    if (requesterIt == m_players.end())
+                        continue;
+
+                    yuno::net::packets::PendingJoinRequestState request{};
+                    request.applicantEntityId = requesterIt->second.entityId;
+                    request.displayName = requesterIt->second.displayName;
+                    state.joinRequests.push_back(std::move(request));
+                }
+            }
+        }
+
+        for (const std::uint32_t invitePartyId : m_partyManager.GetIncomingInvites(sid))
+        {
+            const PartyManager::Party* party = m_partyManager.FindPartyById(invitePartyId);
+            if (!party)
+                continue;
+
+            yuno::net::packets::IncomingInviteState invite{};
+            invite.partyId = invitePartyId;
+            auto leaderIt = m_players.find(party->leaderSessionId);
+            if (leaderIt != m_players.end())
+            {
+                invite.leaderEntityId = leaderIt->second.entityId;
+                invite.leaderName = leaderIt->second.displayName;
+            }
+            state.incomingInvites.push_back(std::move(invite));
+        }
+
+        auto bytes = yuno::net::PacketBuilder::Build(
+            yuno::net::PacketType::S2C_PartySocialState,
+            [&state](yuno::net::ByteWriter& w)
+            {
+                state.Serialize(w);
+            });
+        session->Send(std::move(bytes));
+    }
+
+    void YunoServerNetwork::SendPartySocialStateToSession(
+        std::uint64_t sessionId,
+        yuno::net::packets::PartyResultCode resultCode,
+        const std::string& statusText) const
+    {
+        auto session = FindSession(sessionId);
+        if (session)
+            SendPartySocialState(std::move(session), resultCode, statusText);
+    }
+
+    void YunoServerNetwork::RefreshPartyUiStateForAll() const
+    {
+        for (const auto& [sessionId, player] : m_players)
+        {
+            if (!player.inWorld)
+                continue;
+
+            auto session = FindSession(sessionId);
+            if (!session)
+                continue;
+
+            SendPartyList(session);
+            SendPartySocialState(std::move(session), yuno::net::packets::PartyResultCode::None);
+        }
+    }
+
     void YunoServerNetwork::SendInstanceStateToParticipants(
         const InstanceManager::Instance& instance,
         yuno::net::packets::InstanceResultCode resultCode)
@@ -1135,6 +1435,7 @@ namespace yuno::server
         if (partyId != 0)
             SendPartyStateToParty(partyId, yuno::net::packets::PartyResultCode::None);
 
+        RefreshPartyUiStateForAll();
         BroadcastWorldSnapshot();
         std::cout << "[Server] disconnected sid=" << sid << " ec=" << ec.message() << "\n";
     }
@@ -1202,6 +1503,42 @@ namespace yuno::server
                 auto session = FindSession(peer.sId);
                 if (session)
                     HandlePartyJoin(std::move(session), body, bodyLen);
+            });
+
+        m_dispatcher.RegisterRaw(
+            yuno::net::PacketType::C2S_PartyInvitePlayer,
+            [this](const yuno::net::NetPeer& peer, const yuno::net::PacketHeader&, const std::uint8_t* body, std::uint32_t bodyLen)
+            {
+                auto session = FindSession(peer.sId);
+                if (session)
+                    HandlePartyInvitePlayer(std::move(session), body, bodyLen);
+            });
+
+        m_dispatcher.RegisterRaw(
+            yuno::net::PacketType::C2S_PartyRespondJoinRequest,
+            [this](const yuno::net::NetPeer& peer, const yuno::net::PacketHeader&, const std::uint8_t* body, std::uint32_t bodyLen)
+            {
+                auto session = FindSession(peer.sId);
+                if (session)
+                    HandlePartyRespondJoinRequest(std::move(session), body, bodyLen);
+            });
+
+        m_dispatcher.RegisterRaw(
+            yuno::net::PacketType::C2S_PartyRespondInvite,
+            [this](const yuno::net::NetPeer& peer, const yuno::net::PacketHeader&, const std::uint8_t* body, std::uint32_t bodyLen)
+            {
+                auto session = FindSession(peer.sId);
+                if (session)
+                    HandlePartyRespondInvite(std::move(session), body, bodyLen);
+            });
+
+        m_dispatcher.RegisterRaw(
+            yuno::net::PacketType::C2S_PartyBrowsePlayers,
+            [this](const yuno::net::NetPeer& peer, const yuno::net::PacketHeader&, const std::uint8_t* body, std::uint32_t bodyLen)
+            {
+                auto session = FindSession(peer.sId);
+                if (session)
+                    HandlePartyBrowsePlayers(std::move(session), body, bodyLen);
             });
 
         m_dispatcher.RegisterRaw(

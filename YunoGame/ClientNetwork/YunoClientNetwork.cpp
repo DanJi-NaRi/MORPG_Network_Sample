@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "YunoClientNetwork.h"
 
@@ -303,6 +303,27 @@ namespace yuno::game
                         return;
 
                     yuno::game::PublishPartyList(list);
+                }
+                catch (...)
+                {
+                }
+            });
+
+        Dispatcher().RegisterRaw(
+            PacketType::S2C_PartySocialState,
+            [](const NetPeer&, const PacketHeader&, const std::uint8_t* body, std::uint32_t bodyLen)
+            {
+                if (!body)
+                    return;
+
+                try
+                {
+                    ByteReader reader(body, bodyLen);
+                    const auto social = yuno::net::packets::S2C_PartySocialState::Deserialize(reader);
+                    if (reader.Remaining() != 0)
+                        return;
+
+                    yuno::game::PublishPartySocialState(social);
                 }
                 catch (...)
                 {

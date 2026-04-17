@@ -184,15 +184,11 @@ void Mesh::Submit(const XMFLOAT4X4& mWorld, const XMFLOAT3& pos)
 }
 void Mesh::SubmitWidget(const XMFLOAT4X4& mWorld, const XMFLOAT3& pos, const Update_Data& updateData)
 {
-    //m_renderItem.Constant = updateData;
+    m_renderItem.Constant = updateData;
     m_renderItem.isWidget = true;
 
     XMStoreFloat4x4(&m_renderItem.Constant.world, XMLoadFloat4x4(&mWorld));
     m_renderItem.Constant.worldPos = pos;
-
-    m_renderItem.Constant.widgetSize = updateData.widgetSize;
-    m_renderItem.Constant.widgetValueFloat = updateData.widgetValueFloat;
-    m_renderItem.Constant.widgetValueInt = updateData.widgetValueInt;
 }
 
 void Mesh::AnimSubmit(const std::vector<XMFLOAT4X4>& animTM)

@@ -362,12 +362,65 @@ void GameApp::OnUpdate(float dt)
             m_clientNet.SendPacket(std::move(bytes));
         }
 
-        if (commands.joinPartyId != 0)
+        if (commands.browsePartySocial)
+        {
+            yuno::net::packets::C2S_PartyBrowsePlayers packet{};
+            auto bytes = PacketBuilder::Build(
+                PacketType::C2S_PartyBrowsePlayers,
+                [&packet](ByteWriter& w)
+                {
+                    packet.Serialize(w);
+                });
+            m_clientNet.SendPacket(std::move(bytes));
+        }
+
+        if (commands.applyPartyId != 0)
         {
             yuno::net::packets::C2S_PartyJoin packet{};
-            packet.partyId = commands.joinPartyId;
+            packet.partyId = commands.applyPartyId;
             auto bytes = PacketBuilder::Build(
                 PacketType::C2S_PartyJoin,
+                [&packet](ByteWriter& w)
+                {
+                    packet.Serialize(w);
+                });
+            m_clientNet.SendPacket(std::move(bytes));
+        }
+
+        if (commands.inviteTargetEntityId != 0)
+        {
+            yuno::net::packets::C2S_PartyInvitePlayer packet{};
+            packet.targetEntityId = commands.inviteTargetEntityId;
+            auto bytes = PacketBuilder::Build(
+                PacketType::C2S_PartyInvitePlayer,
+                [&packet](ByteWriter& w)
+                {
+                    packet.Serialize(w);
+                });
+            m_clientNet.SendPacket(std::move(bytes));
+        }
+
+        if (commands.hasJoinRequestResponse)
+        {
+            yuno::net::packets::C2S_PartyRespondJoinRequest packet{};
+            packet.applicantEntityId = commands.respondJoinRequestEntityId;
+            packet.accept = commands.respondJoinRequestAccepted ? 1 : 0;
+            auto bytes = PacketBuilder::Build(
+                PacketType::C2S_PartyRespondJoinRequest,
+                [&packet](ByteWriter& w)
+                {
+                    packet.Serialize(w);
+                });
+            m_clientNet.SendPacket(std::move(bytes));
+        }
+
+        if (commands.hasInviteResponse)
+        {
+            yuno::net::packets::C2S_PartyRespondInvite packet{};
+            packet.partyId = commands.respondInvitePartyId;
+            packet.accept = commands.respondInviteAccepted ? 1 : 0;
+            auto bytes = PacketBuilder::Build(
+                PacketType::C2S_PartyRespondInvite,
                 [&packet](ByteWriter& w)
                 {
                     packet.Serialize(w);

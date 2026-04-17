@@ -299,7 +299,7 @@ protected:
 
     IInput* m_pInput = nullptr;
 
-    UIDirection m_anchor; // 아직 안씀
+    UIDirection m_anchor; // 자식이 부모의 어느 기준점에 붙는지
 
    //UIManager* m_pUIManager = nullptr; // UIManager
     UIFactory& m_uiFactory;
@@ -350,9 +350,11 @@ public:
     void          SetScaleBK(XMFLOAT3 vScaleBk) { m_vScaleBk = vScaleBk; }
     void          SetPivot(Float2 pivot)        { assert(PivotMinMax(pivot)); m_pivot = pivot; m_transformDirty = true; }
     void          SetPivot(UIDirection dir)     { m_pivot = PivotFromUIDirection(dir); m_transformDirty = true;}
+    void          SetAnchor(UIDirection dir)    { m_anchor = dir; m_transformDirty = true; }
     void          SetCanvasSize(Float3 sizeXY)   { m_canvasSize = sizeXY; m_transformDirty = true;}
     void          SetIsRoot(bool isRoot) { m_isRoot = isRoot; }
     void          SetLayer(WidgetLayer layer) { m_layer = layer; }
+    void          SetColor(const XMFLOAT4& color) { m_renderItem.Constant.baseColor = color; }
     void          SetTextureSize(TextureHandle& texHandle);
     void          SetTextureSize(std::wstring path);
     void          SetUseAspectComp(bool useAspectComp) { m_useAspectComp = useAspectComp; }
@@ -382,6 +384,8 @@ public:
     
     const RECT                   GetRect() const { return m_rect; }
     const Float2                 GetPivot() { return m_pivot; }
+    UIDirection                   GetAnchorDirection() const { return m_anchor; }
+    const Float2                  GetAnchor() const { return PivotFromUIDirection(m_anchor); }
     bool                         GetIsRoot() { return m_isRoot; }
     WidgetLayer                  GetLayer() { return m_layer; }
     const Float2                 GetTextureSize(int num) const { m_textureSize; }
@@ -429,6 +433,12 @@ public:
     //virtual bool AddMaterial(MaterialDesc& desc);                           //  다중 머테리얼은 이용 안할듯?
 
     virtual void SetMesh(std::unique_ptr<MeshNode>&& mesh);
+
+protected:
+    Float2 ResolveParentAnchorOffset() const;
+    XMFLOAT3 ResolveLocalTranslation() const;
+
+public:
 
     //bool SwapMaterial(int num);
 

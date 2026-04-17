@@ -104,6 +104,10 @@ namespace yuno::server
         void HandlePartyCreate(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
         void HandlePartyList(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
         void HandlePartyJoin(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
+        void HandlePartyInvitePlayer(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
+        void HandlePartyRespondJoinRequest(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
+        void HandlePartyRespondInvite(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
+        void HandlePartyBrowsePlayers(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
         void HandlePartyLeave(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
         void HandleInstanceEnter(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
         void HandleSkillCast(std::shared_ptr<yuno::net::TcpSession> session, const std::uint8_t* body, std::uint32_t bodyLen);
@@ -112,6 +116,16 @@ namespace yuno::server
         void SendPartyList(std::shared_ptr<yuno::net::TcpSession> session) const;
         void SendPartyStateToParty(std::uint32_t partyId, yuno::net::packets::PartyResultCode resultCode);
         void SendPartyState(std::shared_ptr<yuno::net::TcpSession> session, const yuno::net::packets::S2C_PartyState& state) const;
+        void SendPartySocialState(
+            std::shared_ptr<yuno::net::TcpSession> session,
+            yuno::net::packets::PartyResultCode resultCode,
+            const std::string& statusText = std::string()) const;
+        void SendPartySocialStateToSession(
+            std::uint64_t sessionId,
+            yuno::net::packets::PartyResultCode resultCode,
+            const std::string& statusText = std::string()) const;
+        void RefreshPartyUiStateForAll() const;
+        std::uint64_t FindSessionIdByEntityId(std::uint32_t entityId) const;
         void SendInstanceStateToParticipants(const InstanceManager::Instance& instance, yuno::net::packets::InstanceResultCode resultCode);
         void SendInstanceResultToParticipants(
             const InstanceManager::Instance& instance,
