@@ -270,3 +270,33 @@ Use one or more labels per issue:
 - Outcome: Added inbound packet-rate budgeting in TcpSession, added TcpServer session cap/options and targeted session disconnect API, and migrated YunoServerNetwork packet routing to PacketDispatcher with per-session packet budget enforcement.
 - Verification: Created and ran `scripts\test_transport_hardening.ps1`; PASS with log `Result\Log\20260409_204805_transport_hardening.log` and report `Result\Report\20260409_204805_transport_hardening_report.md`.
 - Learning: Explicit transport/server boundary rate-limits plus dispatcher-based routing reduced ad-hoc branching and made future protocol extension safer.
+
+## Entry: 2026-08-23 KST | Task: Reorganize Portfolio README
+### Summary
+- Goal: Explain the repository's relationship to YunoEngine and make the C++ network, asynchronous programming, and MySQL evidence easy to review.
+- Outcome: Replaced the placeholder README with architecture, module responsibilities, runtime flows, code-review entry points, build/test instructions, design tradeoffs, and known limitations.
+
+### What Went Well
+- Every relative source/document link in the README was checked against the repository and resolved successfully.
+- Technical claims were tied to concrete source paths and existing test reports.
+- The document clearly distinguishes this technical sample from a separate completed game.
+
+### Mistakes
+- Label: FORMAT_MISS
+  Evidence: The first full-file patch used delete and add operations for the same path and was rejected.
+  Root cause: The patch format did not support two operations targeting one file in a single request.
+  Fix applied: Replaced the existing content with one update operation and re-ran validation.
+
+### Cost Signals
+- Build runs: 0
+- Test runs: 0
+- Avoidable retries: 1
+
+### Prevention Rules (Next Tasks)
+- Keep: For a full rewrite of an existing short document, use one update operation instead of delete plus add.
+- Add: Validate every relative link in portfolio documentation before delivery.
+- Remove: None
+
+### Confidence
+- Delivery confidence (0-100): 95
+- Verification depth: medium (documentation-only change; link and diff validation)
