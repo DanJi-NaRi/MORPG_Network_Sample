@@ -109,20 +109,19 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ServerNetwork;$(MYSQL_DIR)\include;C:\Other\MySQL\MySQL Server 8.4\include;$(SolutionDir)vcpkg_installed\x64-windows\include;$(SolutionDir)YunoNetTransport\Public;$(SolutionDir)YunoNetTransport\Public\Net;$(SolutionDir)YunoNetProtocol\Public;$(SolutionDir)YunoNetProtocol\Public\Net;$(SolutionDir)YunoGameProtocol\Public;$(SolutionDir)YunoGameProtocol\Public\Net;$(SolutionDir)YunoGameProtocol\Public\Net\MORPGPackets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ServerNetwork;$(MYSQL_DIR)\include;$(SolutionDir)vcpkg_installed\x64-windows\include;$(SolutionDir)YunoNetTransport\Public;$(SolutionDir)YunoNetTransport\Public\Net;$(SolutionDir)YunoNetProtocol\Public;$(SolutionDir)YunoNetProtocol\Public\Net;$(SolutionDir)YunoGameProtocol\Public;$(SolutionDir)YunoGameProtocol\Public\Net;$(SolutionDir)YunoGameProtocol\Public\Net\MORPGPackets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(MYSQL_DIR)\lib;C:\Other\MySQL\MySQL Server 8.4\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(MYSQL_DIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>libmysql.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>if exist "$(MYSQL_DIR)\lib\libmysql.dll" copy /Y "$(MYSQL_DIR)\lib\libmysql.dll" "$(OutDir)libmysql.dll"
 if not exist "$(OutDir)libmysql.dll" if exist "$(MYSQL_DIR)\bin\libmysql.dll" copy /Y "$(MYSQL_DIR)\bin\libmysql.dll" "$(OutDir)libmysql.dll"
-if not exist "$(OutDir)libmysql.dll" if exist "C:\Other\MySQL\MySQL Server 8.4\lib\libmysql.dll" copy /Y "C:\Other\MySQL\MySQL Server 8.4\lib\libmysql.dll" "$(OutDir)libmysql.dll"
-if not exist "$(OutDir)libmysql.dll" if exist "C:\Other\MySQL\MySQL Server 8.4\bin\libmysql.dll" copy /Y "C:\Other\MySQL\MySQL Server 8.4\bin\libmysql.dll" "$(OutDir)libmysql.dll"</Command>
+if not exist "$(OutDir)libmysql.dll" exit /b 1</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -133,20 +132,19 @@ if not exist "$(OutDir)libmysql.dll" if exist "C:\Other\MySQL\MySQL Server 8.4\b
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ServerNetwork;$(MYSQL_DIR)\include;C:\Other\MySQL\MySQL Server 8.4\include;$(SolutionDir)vcpkg_installed\x64-windows\include;$(SolutionDir)YunoNetTransport\Public;$(SolutionDir)YunoNetTransport\Public\Net;$(SolutionDir)YunoNetProtocol\Public;$(SolutionDir)YunoNetProtocol\Public\Net;$(SolutionDir)YunoGameProtocol\Public;$(SolutionDir)YunoGameProtocol\Public\Net;$(SolutionDir)YunoGameProtocol\Public\Net\MORPGPackets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ServerNetwork;$(MYSQL_DIR)\include;$(SolutionDir)vcpkg_installed\x64-windows\include;$(SolutionDir)YunoNetTransport\Public;$(SolutionDir)YunoNetTransport\Public\Net;$(SolutionDir)YunoNetProtocol\Public;$(SolutionDir)YunoNetProtocol\Public\Net;$(SolutionDir)YunoGameProtocol\Public;$(SolutionDir)YunoGameProtocol\Public\Net;$(SolutionDir)YunoGameProtocol\Public\Net\MORPGPackets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(MYSQL_DIR)\lib;C:\Other\MySQL\MySQL Server 8.4\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(MYSQL_DIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>libmysql.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>if exist "$(MYSQL_DIR)\lib\libmysql.dll" copy /Y "$(MYSQL_DIR)\lib\libmysql.dll" "$(OutDir)libmysql.dll"
 if not exist "$(OutDir)libmysql.dll" if exist "$(MYSQL_DIR)\bin\libmysql.dll" copy /Y "$(MYSQL_DIR)\bin\libmysql.dll" "$(OutDir)libmysql.dll"
-if not exist "$(OutDir)libmysql.dll" if exist "C:\Other\MySQL\MySQL Server 8.4\lib\libmysql.dll" copy /Y "C:\Other\MySQL\MySQL Server 8.4\lib\libmysql.dll" "$(OutDir)libmysql.dll"
-if not exist "$(OutDir)libmysql.dll" if exist "C:\Other\MySQL\MySQL Server 8.4\bin\libmysql.dll" copy /Y "C:\Other\MySQL\MySQL Server 8.4\bin\libmysql.dll" "$(OutDir)libmysql.dll"</Command>
+if not exist "$(OutDir)libmysql.dll" exit /b 1</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -177,6 +175,11 @@ if not exist "$(OutDir)libmysql.dll" if exist "C:\Other\MySQL\MySQL Server 8.4\b
   <PropertyGroup Label="VcpkgOverrides">
     <VcpkgAdditionalInstallOptions>--feature-flags=-compilertracking</VcpkgAdditionalInstallOptions>
   </PropertyGroup>
+  <Target Name="ValidateMySqlDirectory" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(MYSQL_DIR)'==''" Text="MYSQL_DIR must point to a MySQL installation directory." />
+    <Error Condition="!Exists('$(MYSQL_DIR)\include\mysql.h')" Text="mysql.h was not found under $(MYSQL_DIR)\include." />
+    <Error Condition="!Exists('$(MYSQL_DIR)\lib\libmysql.lib')" Text="libmysql.lib was not found under $(MYSQL_DIR)\lib." />
+  </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -300,3 +300,34 @@ Use one or more labels per issue:
 ### Confidence
 - Delivery confidence (0-100): 95
 - Verification depth: medium (documentation-only change; link and diff validation)
+
+## Entry: 2026-08-23 KST | Task: Remove Database Credential and MySQL Path Fallbacks
+### Summary
+- Goal: Remove committed database credential defaults and developer-machine-specific MySQL paths.
+- Outcome: DB user/password are now required through environment variables, and both server projects use only `MYSQL_DIR` for MySQL headers, libraries, and runtime DLL lookup.
+
+### What Went Well
+- Added fail-fast runtime messages when `YUNO_DB_USER` or `YUNO_DB_PASS` is missing.
+- Added MSBuild validation for an unset or invalid `MYSQL_DIR`.
+- Confirmed both project files remain valid XML and no credential fallback or personal MySQL path remains in the current tree.
+- Confirmed the missing-`MYSQL_DIR` build path emits the intended actionable error.
+
+### Mistakes
+- Label: ENV_BLOCKER
+  Evidence: The full Debug x64 build stopped at `YunoLoginServer` because Boost.Asio headers were unavailable.
+  Root cause: The local checkout does not contain `vcpkg_installed`, and the required Boost dependencies were not restored.
+  Fix applied: Recorded the environment blocker and retained the successful XML, static, and MSBuild negative-path checks.
+
+### Cost Signals
+- Build runs: 1
+- Test runs: 1 targeted MSBuild configuration validation
+- Avoidable retries: 0
+
+### Prevention Rules (Next Tasks)
+- Keep: Validate required external SDK properties before invoking a full build.
+- Add: Restore the vcpkg manifest dependencies before the next runtime verification.
+- Remove: None
+
+### Confidence
+- Delivery confidence (0-100): 92
+- Verification depth: medium (configuration and static checks passed; full build blocked by missing Boost dependency)

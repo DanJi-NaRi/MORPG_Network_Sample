@@ -575,9 +575,15 @@ namespace yuno::server
 
         const std::string host = ReadEnvOrDefault("YUNO_DB_HOST", "127.0.0.1");
         const unsigned int port = ReadEnvPortOrDefault("YUNO_DB_PORT", 3306);
-        const std::string user = ReadEnvOrDefault("YUNO_DB_USER", "***REMOVED***");
-        const std::string password = ReadEnvOrDefault("YUNO_DB_PASS", "***REMOVED***");
+        const std::string user = ReadEnvValue("YUNO_DB_USER");
+        const std::string password = ReadEnvValue("YUNO_DB_PASS");
         const std::string database = ReadEnvOrDefault("YUNO_DB_NAME", "yuno_auth");
+
+        if (user.empty() || password.empty())
+        {
+            std::cerr << "[Server] YUNO_DB_USER and YUNO_DB_PASS environment variables are required.\n";
+            return false;
+        }
 
         MYSQL* mysql = mysql_init(nullptr);
         if (!mysql)
