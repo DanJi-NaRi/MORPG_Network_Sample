@@ -331,3 +331,36 @@ Use one or more labels per issue:
 ### Confidence
 - Delivery confidence (0-100): 92
 - Verification depth: medium (configuration and static checks passed; full build blocked by missing Boost dependency)
+
+## Entry: 2026-08-23 KST | Task: Purge Exposed Database Credentials From Git History
+### Summary
+- Goal: Remove the exposed DB user/password values from reachable branch history without discarding the existing development timeline.
+- Outcome: Rewrote all 68 mirrored commits, atomically force-pushed all three branches, and synchronized the local `Dev` branch to the rewritten lineage.
+
+### What Went Well
+- Preserved per-branch commit counts: backup 8, Dev 22, and network-refactoring 66.
+- Preserved the Dev commit author/date/message sequence and the latest Dev file tree.
+- Verified the two exposed values have zero history hits across all remote branch refs after a fresh mirror clone.
+- Used one atomic force-push so all three branch updates succeeded or failed together.
+- Removed the temporary mirrors containing the original history after remote verification.
+
+### Mistakes
+- Label: TOOL_MISS
+  Evidence: Two force-push dry-run attempts failed before the successful preflight.
+  Root cause: The first PowerShell argument array was constructed incorrectly, and the second used a mirror-configured remote that rejects explicit refspecs.
+  Fix applied: Added a separate non-mirror remote and repeated the atomic dry run successfully before the real push.
+
+### Cost Signals
+- History rewrite runs: 1
+- Atomic force-push runs: 1
+- Avoidable preflight retries: 2
+
+### Prevention Rules (Next Tasks)
+- Keep: Rewrite sensitive history only in disposable mirror clones and verify commit counts, metadata, tip trees, and secret scans before force-pushing.
+- Add: Use a separate non-mirror push remote when sending explicit sanitized branch refspecs from a mirror clone.
+- Add: Request GitHub removal of affected pull-request refs and cached views after sensitive-data history rewrites.
+- Remove: None
+
+### Confidence
+- Delivery confidence (0-100): 90
+- Verification depth: high for branch history; four GitHub-managed pull-request refs still require server-side purge
