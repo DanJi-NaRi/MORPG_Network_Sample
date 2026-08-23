@@ -1,14 +1,18 @@
 #pragma once
 
+#include "YunoAudioConfig.h"
+
 #include <fmod_studio.hpp>
 #include <fmod.hpp>
 
+#if YUNO_ENABLE_FMOD
 #ifdef _DEBUG
 #pragma comment(lib, "fmodstudioL_vc.lib")
 #pragma comment(lib, "fmodL_vc.lib")
 #else
 #pragma comment(lib, "fmodstudio_vc.lib")
 #pragma comment(lib, "fmod_vc.lib")
+#endif
 #endif
 
 void CheckFMOD(FMOD_RESULT r, const char* where);

@@ -65,7 +65,9 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Label="UserMacros">
+    <YunoEnableFMOD Condition="'$(YunoEnableFMOD)'==''">0</YunoEnableFMOD>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)Bin\$(Platform)\$(Configuration)\Engine\</OutDir>
     <IntDir>$(SolutionDir)Intermediate\$(Platform)\$(Configuration)\Engine\</IntDir>
@@ -82,7 +84,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;YUNO_ENABLE_FMOD=$(YunoEnableFMOD);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -99,7 +101,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;YUNO_ENABLE_FMOD=$(YunoEnableFMOD);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -116,7 +118,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_LIB;YUNO_ENABLE_FMOD=$(YunoEnableFMOD);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -131,8 +133,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty\Assimp\lib\Debug;$(SolutionDir)External\DirectXTK\Bin\Desktop_2022\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mtd.lib;zlibstaticd.lib;DirectXTK.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)vcpkg_installed\x64-windows\debug\lib;$(SolutionDir)External\DirectXTK\Bin\Desktop_2022\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc143-mtd.lib;zlibd.lib;DirectXTK.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -141,7 +143,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;YUNO_ENABLE_FMOD=$(YunoEnableFMOD);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -158,8 +160,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty\Assimp\lib\Release;$(SolutionDir)External\DirectXTK\Bin\Desktop_2022\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mt.lib;zlibstatic.lib;DirectXTK.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)vcpkg_installed\x64-windows\lib;$(SolutionDir)External\DirectXTK\Bin\Desktop_2022\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc143-mt.lib;zlib.lib;DirectXTK.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -234,6 +236,7 @@
     <ClInclude Include="Public\Sound\EventHandle.h" />
     <ClInclude Include="Public\Sound\fmodPCH.h" />
     <ClInclude Include="Public\Sound\IAudioManager.h" />
+    <ClInclude Include="Public\Sound\YunoAudioConfig.h" />
     <ClInclude Include="Public\YunoEngine.h" />
     <ClInclude Include="Public\UI\Text.h" />
     <ClInclude Include="Public\UI\Slot.h" />
@@ -289,13 +292,27 @@
     <ClCompile Include="Public\SceneBase\SceneBase.cpp" />
     <ClCompile Include="Private\UI\Widget.cpp" />
     <ClCompile Include="Public\SceneBase\SerializeScene.cpp" />
-    <ClCompile Include="Public\Sound\AudioQueue.cpp" />
-    <ClCompile Include="Public\Sound\AudioManager.cpp" />
-    <ClCompile Include="Public\Sound\AudioManagerPCH.cpp" />
-    <ClCompile Include="Public\Sound\AudioCore.cpp" />
-    <ClCompile Include="Public\Sound\Bank.cpp" />
-    <ClCompile Include="Public\Sound\EventHandle.cpp" />
-    <ClCompile Include="Public\Sound\fmodPCH.cpp" />
+    <ClCompile Include="Public\Sound\AudioQueue.cpp">
+      <ExcludedFromBuild Condition="'$(YunoEnableFMOD)'!='1'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Public\Sound\AudioManager.cpp">
+      <ExcludedFromBuild Condition="'$(YunoEnableFMOD)'!='1'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Public\Sound\AudioManagerPCH.cpp">
+      <ExcludedFromBuild Condition="'$(YunoEnableFMOD)'!='1'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Public\Sound\AudioCore.cpp">
+      <ExcludedFromBuild Condition="'$(YunoEnableFMOD)'!='1'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Public\Sound\Bank.cpp">
+      <ExcludedFromBuild Condition="'$(YunoEnableFMOD)'!='1'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Public\Sound\EventHandle.cpp">
+      <ExcludedFromBuild Condition="'$(YunoEnableFMOD)'!='1'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Public\Sound\fmodPCH.cpp">
+      <ExcludedFromBuild Condition="'$(YunoEnableFMOD)'!='1'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Private\UI\Text.cpp" />
     <ClCompile Include="Private\UI\UITool\UIManager.cpp" />
     <ClCompile Include="Private\UI\UITool\UIFactory.cpp" />

@@ -446,6 +446,9 @@
     <ClInclude Include="Public\Sound\IAudioManager.h">
       <Filter>Public\Sound\header</Filter>
     </ClInclude>
+    <ClInclude Include="Public\Sound\YunoAudioConfig.h">
+      <Filter>Public\Sound\header</Filter>
+    </ClInclude>
     <ClInclude Include="Public\UI\Image.h">
       <Filter>Public\UI\BaseWidget</Filter>
     </ClInclude>

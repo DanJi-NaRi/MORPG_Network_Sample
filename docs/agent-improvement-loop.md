@@ -364,3 +364,71 @@ Use one or more labels per issue:
 ### Confidence
 - Delivery confidence (0-100): 90
 - Verification depth: high for branch history; four GitHub-managed pull-request refs still require server-side purge
+
+## Entry: 2026-08-23 KST | Task: Build Dev and Audit Implemented Feature Scope
+### Summary
+- Goal: Build the Dev branch with its declared dependencies and identify the actually implemented MORPG feature boundary.
+- Outcome: Built DirectXTK, both protocol libraries, the transport library, `YunoLoginServer`, and `YunoServer` in Debug x64; the final `YunoGame` link is blocked only by the absent proprietary FMOD Studio API 2.03.06 libraries.
+
+### What Went Well
+- Restored the vcpkg manifest dependencies under an ASCII temporary path to avoid the non-ASCII Windows profile compiler failure.
+- Added the missing Argon2 link/runtime deployment, declared Assimp in the manifest, aligned Assimp/zlib Debug and Release paths, and made the official build script build DirectXTK first.
+- Verified the vcpkg install plan is stable and the vcpkg submodule is clean after the temporary archive-extraction workaround was reverted.
+- Confirmed from handlers rather than packet IDs alone that auth, token world entry, authoritative movement, snapshot ACK, prediction/interpolation, and bot load mode are implemented.
+
+### Mistakes
+- Label: DEPENDENCY_ASSUMPTION
+  Evidence: The first full build attempts discovered Boost, MySQL, Argon2, Assimp, DirectXTK, and FMOD requirements one at a time.
+  Root cause: The build script did not validate or build all external prerequisites before entering the solution target loop.
+  Fix applied: Added DirectXTK prebuild handling, declared/linkable vcpkg dependencies, and recorded FMOD as the remaining external SDK blocker.
+- Label: TOOL_WORKAROUND_COST
+  Evidence: Manifest normalization rebuilt PhysX twice after a temporary vcpkg extraction-script change.
+  Root cause: CMake 3.31 rejected the valid pugixml archive while Windows tar extracted it successfully, and the temporary core-script change affected package ABI calculation.
+  Fix applied: Completed one normal-ABI manifest install, reverted the script, and revalidated a stable dry-run plan.
+
+### Cost Signals
+- Full build runs: 6
+- Dependency install/normalization runs: 7
+- Runtime test runs: 0 (servers require a configured MySQL instance; client link requires FMOD Studio API 2.03.06)
+- Avoidable retries: 2
+
+### Prevention Rules (Next Tasks)
+- Keep: Separate compilable handlers from enum/schema-only placeholders when reporting feature scope.
+- Add: Add a fail-fast FMOD SDK path/version check or a documented audio-disabled sample configuration before the next clean-machine build.
+- Add: Validate all generated `.lib` and required runtime `.dll` files before the full solution target loop.
+- Remove: None
+
+### Confidence
+- Delivery confidence (0-100): 93
+- Verification depth: high for network/server compilation and static feature tracing; client runtime remains blocked by FMOD Studio API 2.03.06
+
+## Entry: 2026-08-23 KST | Task: Add an Audio-Optional Portfolio Build
+### Summary
+- Goal: Allow the public MORPG network sample to build without the proprietary FMOD Studio SDK while preserving the full-engine audio implementation.
+- Outcome: Added the `YunoEnableFMOD` build option with a default value of `0`, excluded FMOD source units when disabled, and completed the full Dev Debug x64 build including `YunoGame.exe`.
+
+### What Went Well
+- Kept FMOD code intact and limited the default-off behavior to compile/link configuration and three guarded engine lifecycle calls.
+- Added a fail-fast dependency check for explicit `-YunoEnableFMOD 1` builds.
+- Verified `YunoGame.exe` has no direct FMOD DLL dependency in the default portfolio configuration.
+- Documented both the default public build and the opt-in full-engine FMOD command.
+
+### Mistakes
+- Label: PATCH_CONTEXT
+  Evidence: The first combined patch failed before applying any changes.
+  Root cause: The expected context around `fmodPCH.h` did not include the file's blank-line layout.
+  Fix applied: Split the work into small file-specific patches and validated the resulting XML and PowerShell syntax.
+
+### Cost Signals
+- Full build runs: 1
+- Targeted negative-path tests: 1
+- Avoidable retries: 1
+
+### Prevention Rules (Next Tasks)
+- Keep: Default proprietary integrations off in public portfolio configurations while retaining an explicit opt-in path.
+- Add: Inspect exact small-file context before composing a multi-file patch.
+- Remove: None
+
+### Confidence
+- Delivery confidence (0-100): 98
+- Verification depth: high (full Debug x64 build, binary existence, import-table inspection, and FMOD guard negative-path test)

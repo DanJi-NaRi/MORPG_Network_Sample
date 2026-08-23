@@ -2,9 +2,11 @@
   "name": "yunoengine",
   "version-string": "0.1.0",
   "dependencies": [
+    "assimp",
     "boost-asio",
     "boost-system",
     "argon2",
+    "openssl",
     "physx"
   ]
 }

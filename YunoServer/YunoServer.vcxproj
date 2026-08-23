@@ -121,7 +121,11 @@
     <PostBuildEvent>
       <Command>if exist "$(MYSQL_DIR)\lib\libmysql.dll" copy /Y "$(MYSQL_DIR)\lib\libmysql.dll" "$(OutDir)libmysql.dll"
 if not exist "$(OutDir)libmysql.dll" if exist "$(MYSQL_DIR)\bin\libmysql.dll" copy /Y "$(MYSQL_DIR)\bin\libmysql.dll" "$(OutDir)libmysql.dll"
-if not exist "$(OutDir)libmysql.dll" exit /b 1</Command>
+if not exist "$(OutDir)libmysql.dll" exit /b 1
+if not exist "$(SolutionDir)vcpkg_installed\x64-windows\bin\libcrypto-3-x64.dll" exit /b 1
+if not exist "$(SolutionDir)vcpkg_installed\x64-windows\bin\libssl-3-x64.dll" exit /b 1
+copy /Y "$(SolutionDir)vcpkg_installed\x64-windows\bin\libcrypto-3-x64.dll" "$(OutDir)libcrypto-3-x64.dll"
+copy /Y "$(SolutionDir)vcpkg_installed\x64-windows\bin\libssl-3-x64.dll" "$(OutDir)libssl-3-x64.dll"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -144,7 +148,11 @@ if not exist "$(OutDir)libmysql.dll" exit /b 1</Command>
     <PostBuildEvent>
       <Command>if exist "$(MYSQL_DIR)\lib\libmysql.dll" copy /Y "$(MYSQL_DIR)\lib\libmysql.dll" "$(OutDir)libmysql.dll"
 if not exist "$(OutDir)libmysql.dll" if exist "$(MYSQL_DIR)\bin\libmysql.dll" copy /Y "$(MYSQL_DIR)\bin\libmysql.dll" "$(OutDir)libmysql.dll"
-if not exist "$(OutDir)libmysql.dll" exit /b 1</Command>
+if not exist "$(OutDir)libmysql.dll" exit /b 1
+if not exist "$(SolutionDir)vcpkg_installed\x64-windows\bin\libcrypto-3-x64.dll" exit /b 1
+if not exist "$(SolutionDir)vcpkg_installed\x64-windows\bin\libssl-3-x64.dll" exit /b 1
+copy /Y "$(SolutionDir)vcpkg_installed\x64-windows\bin\libcrypto-3-x64.dll" "$(OutDir)libcrypto-3-x64.dll"
+copy /Y "$(SolutionDir)vcpkg_installed\x64-windows\bin\libssl-3-x64.dll" "$(OutDir)libssl-3-x64.dll"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

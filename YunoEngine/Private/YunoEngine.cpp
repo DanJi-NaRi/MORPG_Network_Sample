@@ -1,6 +1,8 @@
 ﻿#include "pch.h"
 
 #include "YunoEngine.h"
+#include "IAudioManager.h"
+#include "YunoAudioConfig.h"
 
 // ?명꽣?섏씠??
 #include "IGameApp.h"
@@ -19,7 +21,9 @@
 #include "YunoSceneManager.h"
 
  // ?ъ슫??
+#if YUNO_ENABLE_FMOD
 #include "AudioManagerPCH.h"
+#endif
 
 #include "ImGuiManager.h"
 #include "UImgui.h"
@@ -89,10 +93,14 @@ bool YunoEngine::Initialize(IGameApp* game, const wchar_t* title, uint32_t width
 
     // ?ъ슫??
     // ?ъ슫??留ㅻ땲? 珥덇린??
-    AudioCore::Get().Init();
-    // ?ㅻ뵒??留ㅻ땲? ?앹꽦
-    m_audioManager = std::make_unique<AudioManager>();
-    s_audioManager = m_audioManager.get();
+#if YUNO_ENABLE_FMOD
+    if (AudioCore::Get().Init())
+    {
+        // ?ㅻ뵒??留ㅻ땲? ?앹꽦
+        m_audioManager = std::make_unique<AudioManager>();
+        s_audioManager = m_audioManager.get();
+    }
+#endif
 
 #ifdef _DEBUG
     auto YunoSmanager = dynamic_cast<YunoSceneManager*>(m_sceneManager.get());
@@ -210,7 +218,9 @@ int YunoEngine::Run()
         // ???낅뜲?댄듃 (???꾪솚 ApplyPending ?ы븿)
         m_sceneManager->Update(dt);
 
+#if YUNO_ENABLE_FMOD
         AudioCore::Get().Update(dt);  // ?ъ슫??
+#endif
 
         // ---------------------------------?쒕줈???쒖옉 -----------------------------------------
 
@@ -297,7 +307,11 @@ void YunoEngine::Shutdown()
     m_window.reset();
 
     // 7. ?ъ슫???쒖뒪??
+    s_audioManager = nullptr;
+    m_audioManager.reset();
+#if YUNO_ENABLE_FMOD
     AudioCore::Get().Shutdown();
+#endif
 
     m_running = false;
 

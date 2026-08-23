@@ -161,6 +161,7 @@ flowchart LR
 - Boost.Asio
 - Boost.System
 - Argon2
+- Assimp
 - PhysX
 
 ### 환경 변수
@@ -191,6 +192,12 @@ mysql -u your_user -p < .\YunoLoginServer\Sql\init_yuno_auth.sql
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\build_and_test.ps1 -Configuration Debug -Platform x64
+```
+
+공개 네트워크 샘플은 FMOD 없이 빌드되도록 오디오가 기본 비활성화되어 있습니다. FMOD Studio API SDK가 설치된 전체 엔진 환경에서는 다음과 같이 활성화할 수 있습니다.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build_and_test.ps1 -Configuration Debug -Platform x64 -YunoEnableFMOD 1
 ```
 
 빌드 스크립트는 다음 타깃을 순서대로 검증합니다.
